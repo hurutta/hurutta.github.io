@@ -12,14 +12,14 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body data-page="post">
     <div class="background-grid"></div>
     <main class="shell">
       <aside class="left-panel" data-partial="left" data-page="post"></aside>
 
       <section class="middle-panel">
         <div class="panel post-panel">
-          <a class="ghost-link back-link" href="blog.html">← Back to blog</a>
+          <a class="ghost-link back-link" href="blog.html" data-shell-link>← Back to blog</a>
           <p class="eyebrow" id="postCategory">Journal</p>
           <h1 id="postTitle">Loading post…</h1>
           <p class="post-meta" id="postMeta">Please wait.</p>
@@ -32,6 +32,5 @@
       <section class="right-panel" data-partial="right"></section>
     </main>
     <script src="main.js"></script>
-    <script src="post.js"></script>
   </body>
 </html>

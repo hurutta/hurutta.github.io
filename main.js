@@ -1,4 +1,3 @@
-const panels = document.querySelectorAll(".panel");
 const themeStorageKey = "aj-theme";
 const root = document.documentElement;
 const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)");
@@ -32,52 +31,39 @@ const socialSprites = {
   `,
 };
 
-function buildLeftNav(page) {
-  if (page === "blog") {
-    return `
-      <nav>
-        <a class="nav-button" href="index.html">
-          <span>Home</span>
-          <small>Profile & Work</small>
-        </a>
-        <button class="nav-button active" data-target="blog">
-          <span>Blog</span>
-          <small>Tech & Travel</small>
-        </button>
-      </nav>
-    `;
-  }
+const navItems = [
+  {
+    id: "home",
+    label: "Home",
+    subtitle: "Profile & Work",
+    href: "index.html",
+  },
+  {
+    id: "blog",
+    label: "Blog",
+    subtitle: "Tech & Travel",
+    href: "blog.html",
+  },
+];
 
-  if (page === "post") {
-    return `
-      <nav>
-        <a class="nav-button" href="index.html">
-          <span>Home</span>
-          <small>Profile & Work</small>
-        </a>
-        <a class="nav-button active" href="blog.html">
-          <span>Blog</span>
-          <small>Tech & Travel</small>
-        </a>
-      </nav>
-    `;
-  }
-
+function buildLeftNav() {
   return `
     <nav>
-      <button class="nav-button active" data-target="home">
-        <span>Home</span>
-        <small>Profile & Work</small>
-      </button>
-      <a class="nav-button" href="blog.html">
-        <span>Blog</span>
-        <small>Tech & Travel</small>
-      </a>
+      ${navItems
+        .map(
+          (item) => `
+        <a class="nav-button" href="${item.href}" data-shell-link data-shell-target="${item.id}">
+          <span>${item.label}</span>
+          <small>${item.subtitle}</small>
+        </a>
+      `
+        )
+        .join("")}
     </nav>
   `;
 }
 
-function buildLeftPanel(page) {
+function buildLeftPanel() {
   return `
     <div class="brand">
       <div class="avatar">
@@ -86,7 +72,7 @@ function buildLeftPanel(page) {
       <h1>Abid Jawad</h1>
       <p>Researcher • Engineer • Developer</p>
     </div>
-    ${buildLeftNav(page)}
+    ${buildLeftNav()}
     <div class="left-footer">
       <div class="social">
         <a href="https://github.com/hurutta" target="_blank" rel="noreferrer" data-icon="github">GitHub</a>
@@ -140,13 +126,34 @@ function buildRightPanel() {
 
 function renderPartials() {
   document.querySelectorAll("[data-partial='left']").forEach((container) => {
-    const page = container.dataset.page || "home";
-    container.innerHTML = buildLeftPanel(page);
+    container.innerHTML = buildLeftPanel();
   });
   document.querySelectorAll("[data-partial='right']").forEach((container) => {
     container.innerHTML = buildRightPanel();
   });
   decorateSocialLinks();
+}
+
+function normalizeShellPage(page) {
+  if (page === "post") return "blog";
+  return page || "home";
+}
+
+function setActiveShellNav(page) {
+  const target = normalizeShellPage(page);
+  document.querySelectorAll(".nav-button[data-shell-target]").forEach((link) => {
+    link.classList.toggle("active", link.dataset.shellTarget === target);
+  });
+}
+
+function refreshThemeToggleButtons() {
+  themeToggleButtons = Array.from(document.querySelectorAll(".theme-toggle"));
+  themeToggleButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
+      applyTheme(nextTheme);
+    });
+  });
 }
 
 function decorateSocialLinks() {
@@ -167,9 +174,9 @@ function decorateSocialLinks() {
 }
 
 renderPartials();
-
-const buttons = document.querySelectorAll(".nav-button[data-target]");
-const themeToggleButtons = document.querySelectorAll(".theme-toggle");
+let themeToggleButtons = [];
+refreshThemeToggleButtons();
+setActiveShellNav(document.body.dataset.page || "home");
 
 function applyTheme(theme, persist = true) {
   root.dataset.theme = theme;
@@ -189,33 +196,11 @@ const storedTheme = localStorage.getItem(themeStorageKey);
 const initialTheme = storedTheme || (systemPrefersLight.matches ? "light" : "dark");
 applyTheme(initialTheme, Boolean(storedTheme));
 
-themeToggleButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
-    applyTheme(nextTheme);
-  });
-});
-
 systemPrefersLight.addEventListener("change", (event) => {
   if (!localStorage.getItem(themeStorageKey)) {
     applyTheme(event.matches ? "light" : "dark", false);
   }
 });
-
-function showPanel(id) {
-  panels.forEach((panel) => {
-    panel.hidden = panel.id !== id;
-  });
-  buttons.forEach((button) => {
-    button.classList.toggle("active", button.dataset.target === id);
-  });
-}
-
-buttons.forEach((button) => {
-  button.addEventListener("click", () => showPanel(button.dataset.target));
-});
-
-function injectPartials() {}
 
 // --- Blog browser logic ----------------------------------------------------
 const blogData = [
@@ -251,7 +236,7 @@ const blogData = [
   },
 ];
 
-(function initBlogBrowser() {
+function initBlogBrowser() {
   const categoryList = document.getElementById("categoryList");
   const postList = document.getElementById("postList");
   const articlePreview = document.getElementById("articlePreview");
@@ -344,7 +329,7 @@ const blogData = [
       <h3>${post.title}</h3>
       <time>${post.date} · ${post.readingTime}</time>
       <p>${post.summary}</p>
-      <a class="ghost-link" href="post.html?slug=${post.slug}">Continue reading →</a>
+      <a class="ghost-link" href="post.html?slug=${post.slug}" data-shell-link>Continue reading →</a>
     `;
   };
 
@@ -359,7 +344,7 @@ const blogData = [
 
   goToStage("categories");
   renderCategories();
-})();
+}
 
 // --- ChatGPT-style section -------------------------------------------------
 function initChatSection() {
@@ -477,4 +462,214 @@ function initChatSection() {
   runConversation();
 }
 
-initChatSection();
+// --- Post renderer --------------------------------------------------------
+async function hydratePostPage() {
+  const titleEl = document.getElementById("postTitle");
+  const metaEl = document.getElementById("postMeta");
+  const contentEl = document.getElementById("postContent");
+  const categoryEl = document.getElementById("postCategory");
+
+  if (!titleEl || !metaEl || !contentEl || !categoryEl) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("slug");
+
+  if (!slug) {
+    renderPostError(titleEl, metaEl, categoryEl, contentEl, "Use the blog browser to pick a story.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`posts/${slug}.md`);
+    if (!response.ok) throw new Error("Post not found");
+    const text = await response.text();
+    const { frontmatter, body } = parseFrontMatter(text);
+    populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
+    contentEl.innerHTML = markdownToHtml(body);
+  } catch (error) {
+    renderPostError(titleEl, metaEl, categoryEl, contentEl, error.message || "Unknown error");
+  }
+}
+
+function populatePostFrontmatter(meta, titleEl, metaEl, categoryEl) {
+  titleEl.textContent = meta.title || "Untitled";
+  metaEl.textContent = [meta.date, meta.reading_time].filter(Boolean).join(" · ") || "";
+  categoryEl.textContent = meta.category || "Journal";
+}
+
+function parseFrontMatter(source) {
+  if (source.startsWith("---")) {
+    const end = source.indexOf("\n---", 3);
+    if (end !== -1) {
+      const raw = source.slice(3, end).trim();
+      const body = source.slice(end + 4).trim();
+      const frontmatter = {};
+      raw.split("\n").forEach((line) => {
+        const [key, ...rest] = line.split(":");
+        if (!key || rest.length === 0) return;
+        frontmatter[key.trim()] = rest.join(":").trim().replace(/^"|"$/g, "");
+      });
+      return { frontmatter, body };
+    }
+  }
+  return { frontmatter: {}, body: source };
+}
+
+function markdownToHtml(markdown) {
+  const lines = markdown.split(/\r?\n/);
+  let html = "";
+  let buffer = [];
+  let inList = false;
+
+  const flushParagraph = () => {
+    if (buffer.length) {
+      html += `<p>${inlineMarkdown(buffer.join(" "))}</p>`;
+      buffer = [];
+    }
+  };
+
+  const closeList = () => {
+    if (inList) {
+      html += "</ul>";
+      inList = false;
+    }
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      flushParagraph();
+      closeList();
+      return;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      closeList();
+      const level = headingMatch[1].length;
+      html += `<h${level}>${inlineMarkdown(headingMatch[2])}</h${level}>`;
+      return;
+    }
+
+    if (/^[-*+]\s+/.test(trimmed)) {
+      flushParagraph();
+      if (!inList) {
+        html += "<ul>";
+        inList = true;
+      }
+      const item = trimmed.replace(/^[-*+]\s+/, "");
+      html += `<li>${inlineMarkdown(item)}</li>`;
+      return;
+    }
+
+    buffer.push(trimmed);
+  });
+
+  flushParagraph();
+  closeList();
+  return html;
+}
+
+function inlineMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>");
+}
+
+function renderPostError(titleEl, metaEl, categoryEl, contentEl, message) {
+  titleEl.textContent = "Unable to load that post.";
+  metaEl.textContent = "";
+  categoryEl.textContent = "Error";
+  contentEl.innerHTML = `<p>${message}</p>`;
+}
+
+function hydrateShellContent() {
+  initBlogBrowser();
+  initChatSection();
+  hydratePostPage();
+}
+
+hydrateShellContent();
+
+// --- Shell navigation -----------------------------------------------------
+const shellSupportsSPA = "pushState" in window.history && typeof window.fetch === "function";
+let isShellNavigating = false;
+
+if (shellSupportsSPA) {
+  initShellNavigation();
+}
+
+function initShellNavigation() {
+  document.addEventListener("click", handleShellLinkClick);
+  window.addEventListener("popstate", (event) => {
+    const target = event.state?.url || window.location.pathname + window.location.search;
+    navigateShell(target, false);
+  });
+  window.history.replaceState({ url: window.location.pathname + window.location.search }, "", window.location.pathname + window.location.search);
+}
+
+function handleShellLinkClick(event) {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return;
+  }
+  const link = event.target.closest("a[data-shell-link]");
+  if (!link) return;
+  if (link.target && link.target !== "_self") return;
+  const href = link.getAttribute("href");
+  if (!href) return;
+  const targetUrl = new URL(href, window.location.href);
+  if (targetUrl.origin !== window.location.origin) return;
+  if (targetUrl.hash && targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) {
+    return;
+  }
+  event.preventDefault();
+  navigateShell(targetUrl, true);
+}
+
+async function navigateShell(url, push = true) {
+  if (isShellNavigating) return;
+  const targetUrl = typeof url === "string" ? new URL(url, window.location.href) : url;
+  if (targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) return;
+
+  isShellNavigating = true;
+  document.body.classList.add("is-shell-loading");
+
+  try {
+    const response = await fetch(targetUrl.pathname + targetUrl.search, {
+      headers: { "X-Requested-With": "shell-navigation" },
+    });
+    if (!response.ok) throw new Error(`Failed to load ${targetUrl.pathname}`);
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const nextMiddle = doc.querySelector(".middle-panel");
+    if (!nextMiddle) throw new Error("No middle panel in response");
+
+    swapMiddlePanel(nextMiddle);
+
+    const nextPage = doc.body?.dataset.page || doc.querySelector("[data-partial='left']")?.dataset.page || "home";
+    document.body.dataset.page = nextPage;
+    setActiveShellNav(nextPage);
+    document.title = doc.title;
+    if (push) {
+      const stateUrl = targetUrl.pathname + targetUrl.search;
+      window.history.pushState({ url: stateUrl }, "", stateUrl);
+    }
+    hydrateShellContent();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (error) {
+    console.error(error);
+    window.location.href = targetUrl.href;
+  } finally {
+    document.body.classList.remove("is-shell-loading");
+    isShellNavigating = false;
+  }
+}
+
+function swapMiddlePanel(nextPanel) {
+  const current = document.querySelector(".middle-panel");
+  if (!current) return;
+  current.replaceWith(nextPanel);
+}
