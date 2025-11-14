@@ -281,11 +281,11 @@ nav {
   flex: 1;
   width: 100%;
   height: 100%;
-  display: grid;
-  grid-template-rows: repeat(2, 32px);
-  row-gap: 8px;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  padding: 0.35rem 0;
   position: relative;
 }
 
@@ -297,6 +297,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 26px;
 }
 
 .toggle-thumb {
@@ -988,19 +989,26 @@ h2 {
     font-size: 1.5rem;
   }
 
-  .brand {
-    flex-direction: row;
-    align-items: center;
-    text-align: left;
-    gap: 0.75rem;
+  .nav-button:hover,
+  .nav-button:focus-visible {
+    transform: none;
   }
 
-  .brand h1 {
-    font-size: 1.25rem;
+  .social {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding-left: 0.5rem;
   }
 
-  .brand p {
-    font-size: 0.85rem;
+  .social a {
+    font-size: 0.95rem;
+  }
+
+  .theme-toggle {
+    width: 72px;
+    height: 68px;
+    align-self: center;
   }
 
   .left-panel nav {
@@ -1008,49 +1016,18 @@ h2 {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 0.5rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .left-panel nav::-webkit-scrollbar {
-    display: none;
   }
 
   .nav-button {
     flex: 1 1 calc(50% - 0.5rem);
     text-align: center;
-    padding: 0.7rem 0.9rem;
+    padding: 0.75rem 0.85rem;
     white-space: nowrap;
-    scroll-snap-align: start;
-  }
-
-  .nav-button:hover,
-  .nav-button:focus-visible {
-    transform: none;
-  }
-
-  .left-footer {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .social {
-    flex-direction: row;
-    flex-wrap: wrap;
     justify-content: center;
-    gap: 0.65rem;
-  }
-
-  .social a {
-    font-size: 0.9rem;
-  }
-
-  .theme-toggle {
-    width: 100%;
-    height: 68px;
+    gap: 0.15rem;
   }
 
   .browser-panel {
@@ -1361,7 +1338,7 @@ h2 {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
   display: flex;
   gap: 1.5rem;
-  flex-wrap: wrap;
+  align-items: center;
 }
 
 .edu-badge {
