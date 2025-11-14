@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abid Jawad · Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="background-grid"></div>
+    <main class="shell">
+      <aside class="left-panel" data-partial="left" data-page="blog"></aside>
+
+      <section class="middle-panel">
+        <div class="panel" id="blog">
+          <p class="eyebrow">Writing</p>
+          <h2>Browse by folders → file → story, inspired by a terminal tree.</h2>
+          <div class="blog-browser staged" role="region" aria-label="Blog content browser">
+            <section class="browser-panel" data-stage="categories" aria-live="polite">
+              <header class="stage-header">
+                <span class="stage-label">Categories</span>
+              </header>
+              <ul class="folder-list" id="categoryList"></ul>
+            </section>
+
+            <section class="browser-panel" data-stage="posts" hidden>
+              <header class="stage-header">
+                <button type="button" id="backToCategories" class="ghost-link back-link">← Categories</button>
+                <span class="stage-label">Posts in <strong id="activeCategoryLabel">—</strong></span>
+              </header>
+              <ul class="file-list" id="postList"></ul>
+            </section>
+
+            <section class="browser-panel" data-stage="preview" hidden>
+              <header class="stage-header">
+                <button type="button" id="backToPosts" class="ghost-link back-link">← Posts</button>
+                <span class="stage-label">Preview</span>
+              </header>
+              <article id="articlePreview" class="article-preview">
+                <h3>Select a post</h3>
+                <p>The first few paragraphs appear here so you can decide what to dive into.</p>
+              </article>
+            </section>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="right-panel" data-partial="right"></section>
+    </main>
+    <script src="main.js"></script>
+  </body>
+</html>
