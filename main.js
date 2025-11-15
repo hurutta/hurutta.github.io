@@ -46,6 +46,16 @@ const navItems = [
   },
 ];
 
+const homeContentSections = [
+  { id: "about", label: "About" },
+  { id: "askgpt", label: "AskGPT" },
+  { id: "experience", label: "Experience" },
+  { id: "projects", label: "Projects" },
+  { id: "education", label: "Education" },
+  { id: "credentials", label: "Credentials" },
+  { id: "skills", label: "Skills" },
+];
+
 function buildLeftNav() {
   return `
     <nav>
@@ -91,8 +101,26 @@ function buildLeftPanel() {
   `;
 }
 
-function buildRightPanel() {
+function buildContentMap() {
   return `
+    <div class="content-map" aria-label="On this page">
+      <span class="content-map-label">On this page</span>
+      <div class="content-map-links">
+        ${homeContentSections
+          .map(
+            (section) => `<a href="#${section.id}">${section.label}</a>`
+          )
+          .join("")}
+        <a href="#top" class="content-map-link-top" aria-label="Back to top">Top ↑</a>
+      </div>
+    </div>
+  `;
+}
+
+function buildRightPanel(page = "home") {
+  const map = page === "home" ? buildContentMap() : "";
+  return `
+    ${map}
     <div class="project-stats">
       <h3>LeetCode</h3>
       <div class="embed-wrapper">
@@ -128,10 +156,15 @@ function renderPartials() {
   document.querySelectorAll("[data-partial='left']").forEach((container) => {
     container.innerHTML = buildLeftPanel();
   });
-  document.querySelectorAll("[data-partial='right']").forEach((container) => {
-    container.innerHTML = buildRightPanel();
-  });
+  renderRightPanels();
   decorateSocialLinks();
+}
+
+function renderRightPanels(pageOverride) {
+  document.querySelectorAll("[data-partial='right']").forEach((container) => {
+    const page = pageOverride || container.dataset.page || document.body.dataset.page || "home";
+    container.innerHTML = buildRightPanel(page);
+  });
 }
 
 function normalizeShellPage(page) {
@@ -589,6 +622,7 @@ function hydrateShellContent() {
   initBlogBrowser();
   initChatSection();
   hydratePostPage();
+  renderRightPanels(document.body.dataset.page || "home");
 }
 
 hydrateShellContent();

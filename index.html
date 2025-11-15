@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body data-page="home">
+  <body data-page="home" id="top">
     <div class="background-grid"></div>
     <main class="shell">
       <aside class="left-panel" data-partial="left" data-page="home"></aside>
@@ -20,7 +20,7 @@
       <section class="middle-panel">
         <div class="panel" id="home">
           <div class="cv-grid">
-            <section class="cv-section">
+            <section class="cv-section" id="about">
               <p class="eyebrow">About</p>
               <h2>Abid Mohammad Jawad</h2>
               <p class="lede">
@@ -33,7 +33,7 @@
               </ul>
             </section>
 
-            <section class="cv-section chat-section">
+            <section class="cv-section chat-section" id="askgpt">
               <div class="chat-header">
                 <span class="chat-avatar">🤖</span>
                 <div>
@@ -46,7 +46,7 @@
               </div>
             </section>
 
-            <section class="cv-section">
+            <section class="cv-section" id="experience">
               <h3>Experience</h3>
               <div class="cv-timeline">
                 <article>
@@ -148,7 +148,7 @@
                         </div>
                         <div class="project-summary">
                           <p>
-                            To be filled soon ***
+                            Developed and maintained the backend services for bKash's comprehensive QR ecosystem. Engineered high-performance bulk generation systems, enabling the creation of 50,000+ Merchant QRs and Bangla QRs per request, driving operational efficiency and expanding the reach of Bangladesh's largest QR-based payment network.
                           </p>
                         </div>
                       </article>
@@ -158,7 +158,7 @@
               </div>
             </section>
 
-            <section class="cv-section">
+            <section class="cv-section" id="projects">
               <h3>Personal Projects</h3>
               <div class="cv-cards">
                 <article>
@@ -179,7 +179,7 @@
               </div>
             </section>
 
-            <section class="cv-section">
+            <section class="cv-section" id="education">
               <h3>Education</h3>
               <div class="edu-card">
                 <div class="edu-badge">
@@ -217,7 +217,7 @@
               </div>
             </section>
 
-            <section class="cv-section">
+            <section class="cv-section" id="credentials">
               <h3>Credentials</h3>
               <ul class="cv-list">
                 <li><strong>***</strong> · *** · ***</li>
@@ -225,7 +225,7 @@
               </ul>
             </section>
 
-            <section class="cv-section">
+            <section class="cv-section" id="skills">
               <h3>Skills & Tools</h3>
               <div class="cv-tags">
                 <span>Python</span>
@@ -242,7 +242,7 @@
 
       </section>
 
-      <section class="right-panel" data-partial="right"></section>
+      <section class="right-panel" data-partial="right" data-page="home"></section>
     </main>
     <script src="main.js"></script>
   </body>
