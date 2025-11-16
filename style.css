@@ -748,7 +748,7 @@ h2 {
 
 .cv-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
 }
 
@@ -757,6 +757,32 @@ h2 {
   border-radius: 18px;
   padding: 1rem 1.25rem;
   background: rgba(5, 6, 10, 0.6);
+}
+
+.project-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.project-card img {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.project-card small a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.project-card small a:hover {
+  text-decoration: underline;
 }
 
 .cv-cards h4 {
