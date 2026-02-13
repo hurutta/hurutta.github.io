@@ -255,7 +255,7 @@ const blogData = [
   {
     id: "travel",
     name: "Travel",
-    description: "To be filled soon ***",
+    description: "Journeys, itineraries, wandering notes",
     posts: [
       {
         slug: "tromso-auroras",
@@ -264,6 +264,14 @@ const blogData = [
         readingTime: "6 min read",
         summary:
           "To be filled soon ***",
+      },
+      {
+        slug: "travel/srilanka-2025",
+        title: "Sri Lanka Tour 2025",
+        date: "Nov 17, 2025",
+        readingTime: "10 min read",
+        summary:
+          "An 8-day loop from Colombo to Kandy, Ella, and the southern coast—sunrise hikes, scenic trains, and beach towns included.",
       },
     ],
   },
@@ -556,7 +564,22 @@ function markdownToHtml(markdown) {
 
   const flushParagraph = () => {
     if (buffer.length) {
-      html += `<p>${inlineMarkdown(buffer.join(" "))}</p>`;
+      const joined = buffer.join(" ");
+      // Route line: paragraph that is purely italic with arrow characters
+      const routeMatch = joined.match(/^\*([^*]+→[^*]+)\*$/);
+      if (routeMatch) {
+        const stops = routeMatch[1].split("→").map((s) => s.trim()).filter(Boolean);
+        const stopsHtml = stops
+          .map((stop, idx) => {
+            let h = `<span class="md-route-stop">${stop}</span>`;
+            if (idx < stops.length - 1) h += `<span class="md-route-arrow">→</span>`;
+            return h;
+          })
+          .join("");
+        html += `<div class="md-route"><span class="md-route-icon"></span>${stopsHtml}</div>`;
+      } else {
+        html += `<p>${inlineMarkdown(joined)}</p>`;
+      }
       buffer = [];
     }
   };
@@ -568,21 +591,109 @@ function markdownToHtml(markdown) {
     }
   };
 
-  lines.forEach((line) => {
+  const isTableRow = (line) => /^\|.*\|$/.test(line);
+  const isTableDivider = (line) => /^\s*\|?(?:\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$/.test(line);
+  const parseTableRow = (line) =>
+    line
+      .replace(/^\||\|$/g, "")
+      .split("|")
+      .map((cell) => inlineMarkdown(cell.trim()));
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
     const trimmed = line.trim();
+
     if (trimmed === "") {
       flushParagraph();
       closeList();
-      return;
+      continue;
     }
 
-    const headingMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
+    // Horizontal rules
+    if (/^---+$/.test(trimmed)) {
+      flushParagraph();
+      closeList();
+      html += `<div class="md-divider"><span class="md-divider-ornament"></span></div>`;
+      continue;
+    }
+
+    // Blockquotes
+    if (/^>\s?/.test(trimmed)) {
+      flushParagraph();
+      closeList();
+      const quoteLines = [trimmed.replace(/^>\s?/, "")];
+      while (i + 1 < lines.length && /^>\s?/.test(lines[i + 1].trim())) {
+        i += 1;
+        quoteLines.push(lines[i].trim().replace(/^>\s?/, ""));
+      }
+      const quoteText = quoteLines.join(" ");
+      const hashtags = quoteText.match(/#\w+/g);
+      if (hashtags) {
+        const prefix = inlineMarkdown(quoteText.replace(/#\w+/g, "").trim());
+        const tagsHtml = hashtags.map((tag) => `<span class="md-tag">${tag}</span>`).join("");
+        html += `<blockquote class="md-quote"><span class="md-quote-icon"></span><div class="md-quote-body">${prefix}<div class="md-tags">${tagsHtml}</div></div></blockquote>`;
+      } else {
+        html += `<blockquote class="md-quote"><span class="md-quote-icon"></span><div class="md-quote-body">${inlineMarkdown(quoteText)}</div></blockquote>`;
+      }
+      continue;
+    }
+
+    const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)(?:\s+"(.*?)")?\)$/);
+    if (imageMatch) {
+      flushParagraph();
+      closeList();
+      const [, alt = "", src = "", title = ""] = imageMatch;
+      const caption = title || alt;
+      html += `<figure class="md-image"><img src="${src}" alt="${alt}" loading="lazy" />`;
+      if (caption) {
+        html += `<figcaption>${caption}</figcaption>`;
+      }
+      html += "</figure>";
+      continue;
+    }
+
+    if (isTableRow(trimmed) && isTableDivider(lines[i + 1]?.trim() || "")) {
+      flushParagraph();
+      closeList();
+      const headerCells = parseTableRow(trimmed);
+      i += 1; // skip divider
+      const rows = [];
+      while (i + 1 < lines.length && isTableRow(lines[i + 1].trim())) {
+        rows.push(parseTableRow(lines[i + 1].trim()));
+        i += 1;
+      }
+      html += "<div class=\"md-table\"><table><thead><tr>";
+      headerCells.forEach((cell) => {
+        html += `<th>${cell}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+      rows.forEach((row) => {
+        html += "<tr>";
+        row.forEach((cell) => {
+          html += `<td>${cell}</td>`;
+        });
+        html += "</tr>";
+      });
+      html += "</tbody></table></div>";
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
       flushParagraph();
       closeList();
-      const level = headingMatch[1].length;
+      const level = Math.min(6, headingMatch[1].length);
+      // Day heading detection: ## Day N: Title
+      if (level === 2) {
+        const dayMatch = headingMatch[2].match(/^Day\s+(\d+)\s*:\s*(.*)$/);
+        if (dayMatch) {
+          const [, dayNum, dayTitle] = dayMatch;
+          html += `<h2 class="md-day-heading" data-day="${dayNum}"><span class="md-day-badge">Day ${dayNum}</span><span class="md-day-title">${inlineMarkdown(dayTitle)}</span></h2>`;
+          continue;
+        }
+      }
       html += `<h${level}>${inlineMarkdown(headingMatch[2])}</h${level}>`;
-      return;
+      continue;
     }
 
     if (/^[-*+]\s+/.test(trimmed)) {
@@ -593,11 +704,11 @@ function markdownToHtml(markdown) {
       }
       const item = trimmed.replace(/^[-*+]\s+/, "");
       html += `<li>${inlineMarkdown(item)}</li>`;
-      return;
+      continue;
     }
 
     buffer.push(trimmed);
-  });
+  }
 
   flushParagraph();
   closeList();
