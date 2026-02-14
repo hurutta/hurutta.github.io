@@ -1,4 +1,6 @@
 const themeStorageKey = "aj-theme";
+const langStorageKey = "aj-lang";
+let currentLang = "en";
 const root = document.documentElement;
 const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)");
 
@@ -520,6 +522,10 @@ async function hydratePostPage() {
     return;
   }
 
+  // Clean up any stale toggle from SPA navigation
+  const staleToggle = document.getElementById("langToggle");
+  if (staleToggle) staleToggle.remove();
+
   try {
     const response = await fetch(`posts/${slug}.md`);
     if (!response.ok) throw new Error("Post not found");
@@ -527,8 +533,72 @@ async function hydratePostPage() {
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    injectPostContentMap();
+
+    // Check if Bengali version exists
+    try {
+      const bnCheck = await fetch(`posts/${slug}.bn.md`, { method: "HEAD" });
+      if (bnCheck.ok) {
+        const toggleHtml = `<div class="lang-toggle" id="langToggle" role="radiogroup" aria-label="Language">
+  <button class="lang-option active" data-lang="en" role="radio" aria-checked="true">EN</button>
+  <button class="lang-option" data-lang="bn" role="radio" aria-checked="false">বাং</button>
+  <span class="lang-thumb"></span>
+</div>`;
+        contentEl.insertAdjacentHTML("beforebegin", toggleHtml);
+
+        const toggle = document.getElementById("langToggle");
+        toggle.addEventListener("click", (e) => {
+          const btn = e.target.closest(".lang-option");
+          if (!btn || btn.classList.contains("active")) return;
+          const lang = btn.dataset.lang;
+          switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, contentEl);
+        });
+
+        // Auto-switch to Bengali if stored preference says so
+        const storedLang = localStorage.getItem(langStorageKey);
+        if (storedLang === "bn") {
+          switchPostLanguage(slug, "bn", titleEl, metaEl, categoryEl, contentEl);
+        }
+      }
+    } catch (_) {
+      // No Bengali version — toggle not shown
+    }
   } catch (error) {
     renderPostError(titleEl, metaEl, categoryEl, contentEl, error.message || "Unknown error");
+  }
+}
+
+async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, contentEl) {
+  const file = lang === "bn" ? `posts/${slug}.bn.md` : `posts/${slug}.md`;
+  try {
+    const response = await fetch(file);
+    if (!response.ok) return;
+    const text = await response.text();
+    const { frontmatter, body } = parseFrontMatter(text);
+    populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
+    contentEl.innerHTML = markdownToHtml(body);
+    injectPostContentMap();
+    currentLang = lang;
+    localStorage.setItem(langStorageKey, lang);
+
+    // Update toggle active state
+    const toggle = document.getElementById("langToggle");
+    if (toggle) {
+      toggle.querySelectorAll(".lang-option").forEach((btn) => {
+        const isActive = btn.dataset.lang === lang;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-checked", isActive);
+      });
+      toggle.style.setProperty("--lang-thumb-offset", lang === "bn" ? "1" : "0");
+    }
+
+    // Set data attribute for Bengali font CSS
+    const postPanel = contentEl.closest(".post-panel");
+    if (postPanel) {
+      postPanel.setAttribute("data-lang-active", lang);
+    }
+  } catch (_) {
+    // Silently fail — keep current language
   }
 }
 
@@ -561,6 +631,31 @@ function markdownToHtml(markdown) {
   let html = "";
   let buffer = [];
   let inList = false;
+  let imageBuffer = [];
+
+  const flushImages = () => {
+    if (!imageBuffer.length) return;
+    if (imageBuffer.length === 1) {
+      const { alt, src, caption } = imageBuffer[0];
+      html += `<figure class="md-image"><img src="${src}" alt="${alt}" loading="lazy" />`;
+      if (caption) html += `<figcaption>${caption}</figcaption>`;
+      html += "</figure>";
+    } else {
+      const extraCount = imageBuffer.length > 3 ? imageBuffer.length - 3 : 0;
+      html += `<div class="md-image-grid">`;
+      imageBuffer.forEach(({ alt, src, caption }, i) => {
+        const isExtra = i >= 3;
+        const isLastVisible = i === 2 && extraCount > 0;
+        const cls = isExtra ? "md-image md-image-extra" : "md-image";
+        const moreAttr = isLastVisible ? ` data-more="${extraCount}" onclick="this.closest('.md-image-grid').classList.add('expanded')"` : "";
+        html += `<figure class="${cls}"${moreAttr}><img src="${src}" alt="${alt}" loading="lazy" />`;
+        if (caption) html += `<figcaption>${caption}</figcaption>`;
+        html += "</figure>";
+      });
+      html += `</div>`;
+    }
+    imageBuffer = [];
+  };
 
   const flushParagraph = () => {
     if (buffer.length) {
@@ -606,6 +701,7 @@ function markdownToHtml(markdown) {
     if (trimmed === "") {
       flushParagraph();
       closeList();
+      flushImages();
       continue;
     }
 
@@ -613,6 +709,7 @@ function markdownToHtml(markdown) {
     if (/^---+$/.test(trimmed)) {
       flushParagraph();
       closeList();
+      flushImages();
       html += `<div class="md-divider"><span class="md-divider-ornament"></span></div>`;
       continue;
     }
@@ -621,6 +718,7 @@ function markdownToHtml(markdown) {
     if (/^>\s?/.test(trimmed)) {
       flushParagraph();
       closeList();
+      flushImages();
       const quoteLines = [trimmed.replace(/^>\s?/, "")];
       while (i + 1 < lines.length && /^>\s?/.test(lines[i + 1].trim())) {
         i += 1;
@@ -644,17 +742,14 @@ function markdownToHtml(markdown) {
       closeList();
       const [, alt = "", src = "", title = ""] = imageMatch;
       const caption = title || alt;
-      html += `<figure class="md-image"><img src="${src}" alt="${alt}" loading="lazy" />`;
-      if (caption) {
-        html += `<figcaption>${caption}</figcaption>`;
-      }
-      html += "</figure>";
+      imageBuffer.push({ alt, src, caption });
       continue;
     }
 
     if (isTableRow(trimmed) && isTableDivider(lines[i + 1]?.trim() || "")) {
       flushParagraph();
       closeList();
+      flushImages();
       const headerCells = parseTableRow(trimmed);
       i += 1; // skip divider
       const rows = [];
@@ -682,13 +777,15 @@ function markdownToHtml(markdown) {
     if (headingMatch) {
       flushParagraph();
       closeList();
+      flushImages();
       const level = Math.min(6, headingMatch[1].length);
       // Day heading detection: ## Day N: Title
       if (level === 2) {
-        const dayMatch = headingMatch[2].match(/^Day\s+(\d+)\s*:\s*(.*)$/);
+        const dayMatch = headingMatch[2].match(/^Day\s+(\d+)\s*:\s*(.*?)(?:\s*\|\s*(.+))?$/);
         if (dayMatch) {
-          const [, dayNum, dayTitle] = dayMatch;
-          html += `<h2 class="md-day-heading" data-day="${dayNum}"><span class="md-day-badge">Day ${dayNum}</span><span class="md-day-title">${inlineMarkdown(dayTitle)}</span></h2>`;
+          const [, dayNum, dayTitle, dayDate] = dayMatch;
+          const dateHtml = dayDate ? `<span class="md-day-date">${dayDate.trim()}</span>` : "";
+          html += `<h2 class="md-day-heading" id="day-${dayNum}" data-day="${dayNum}"><span class="md-day-badge">Day ${dayNum}</span>${dateHtml}<span class="md-day-title">${inlineMarkdown(dayTitle)}</span></h2>`;
           continue;
         }
       }
@@ -698,6 +795,7 @@ function markdownToHtml(markdown) {
 
     if (/^[-*+]\s+/.test(trimmed)) {
       flushParagraph();
+      flushImages();
       if (!inList) {
         html += "<ul>";
         inList = true;
@@ -707,11 +805,13 @@ function markdownToHtml(markdown) {
       continue;
     }
 
+    flushImages();
     buffer.push(trimmed);
   }
 
   flushParagraph();
   closeList();
+  flushImages();
   return html;
 }
 
@@ -720,6 +820,40 @@ function inlineMarkdown(text) {
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, "<code>$1</code>");
+}
+
+function buildPostContentMap() {
+  const headings = document.querySelectorAll("#postContent .md-day-heading");
+  if (!headings.length) return "";
+  const links = Array.from(headings).map((h) => {
+    const day = h.dataset.day;
+    const titleEl = h.querySelector(".md-day-title");
+    const label = titleEl ? titleEl.textContent.trim() : `Day ${day}`;
+    // Shorten long titles for the nav
+    const short = label.length > 28 ? label.slice(0, 26) + "…" : label;
+    return `<a href="#day-${day}">Day ${day}: ${short}</a>`;
+  }).join("");
+  return `
+    <div class="content-map" aria-label="On this page">
+      <span class="content-map-label">On this page</span>
+      <div class="content-map-links">
+        ${links}
+        <a href="#top" class="content-map-link-top" aria-label="Back to top">Top ↑</a>
+      </div>
+    </div>
+  `;
+}
+
+function injectPostContentMap() {
+  const rightPanel = document.querySelector(".right-panel[data-page='post']");
+  if (!rightPanel) return;
+  // Remove any existing post content map
+  const existing = rightPanel.querySelector(".content-map");
+  if (existing) existing.remove();
+  const mapHtml = buildPostContentMap();
+  if (mapHtml) {
+    rightPanel.insertAdjacentHTML("afterbegin", mapHtml);
+  }
 }
 
 function renderPostError(titleEl, metaEl, categoryEl, contentEl, message) {
