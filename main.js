@@ -1,6 +1,7 @@
 const themeStorageKey = "aj-theme";
 const langStorageKey = "aj-lang";
 let currentLang = "en";
+let cachedViewCount = null;
 const root = document.documentElement;
 const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)");
 
@@ -135,10 +136,14 @@ function buildRightPanel(page = "home") {
         <img src="https://codeforces-readme-stats.vercel.app/api/card?username=hurutta&theme=monokai&disable_animations=false&show_icons=true&force_username=true" alt="CodeForces stats" />
       </div>
     </div>
-    <div class="project-embed">
+    <div class="project-embed medium-card">
       <h3>LinkedIn</h3>
-      <div class="embed-wrapper">
-        <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7358686570813575172" height="686" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+      <div class="embed-wrapper medium">
+        <img src="https://media.licdn.com/dms/image/v2/D5622AQHEP94JPUaKqg/feedshare-shrink_800/B56Zh9OcFQHMAk-/0/1754447595046?e=1772668800&v=beta&t=7Kf-bO4H8GgiEeF8rFgVMhJ533GFyUfNIL8uweXF5mk" alt="LinkedIn post cover" />
+        <div>
+          <p class="medium-title">Abid Jawad on LinkedIn</p>
+          <a href="https://www.linkedin.com/feed/update/urn:li:share:7358686570813575172" target="_blank" rel="noreferrer">View on LinkedIn →</a>
+        </div>
       </div>
     </div>
     <div class="project-embed medium-card">
@@ -507,6 +512,7 @@ function initChatSection() {
 
 // --- Post renderer --------------------------------------------------------
 async function hydratePostPage() {
+  cachedViewCount = null;
   const titleEl = document.getElementById("postTitle");
   const metaEl = document.getElementById("postMeta");
   const contentEl = document.getElementById("postContent");
@@ -534,6 +540,7 @@ async function hydratePostPage() {
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
     injectPostContentMap();
+    fetchViewCount();
 
     // Check if Bengali version exists
     try {
@@ -604,8 +611,29 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
 
 function populatePostFrontmatter(meta, titleEl, metaEl, categoryEl) {
   titleEl.textContent = meta.title || "Untitled";
-  metaEl.textContent = [meta.date, meta.reading_time].filter(Boolean).join(" · ") || "";
+  const metaParts = [meta.date, meta.reading_time].filter(Boolean).join(" · ");
+  const countDisplay = cachedViewCount !== null ? cachedViewCount : "—";
+  metaEl.innerHTML = metaParts ? `${metaParts} · <span id="viewCount">${countDisplay}</span> unique visitors` : "";
   categoryEl.textContent = meta.category || "Journal";
+}
+
+function fetchViewCount() {
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("slug");
+  if (!slug) return;
+  // Clean path: post/travel/srilanka-2025 — no query string, no encoding issues
+  const cleanPath = "post/" + slug;
+  const url = "https://hurutta.goatcounter.com/counter/" + cleanPath + ".json?_=" + Date.now();
+  const r = new XMLHttpRequest();
+  r.addEventListener("load", function () {
+    if (r.status === 200) {
+      cachedViewCount = JSON.parse(this.responseText).count;
+      const el = document.getElementById("viewCount");
+      if (el) el.textContent = cachedViewCount;
+    }
+  });
+  r.open("GET", url);
+  r.send();
 }
 
 function parseFrontMatter(source) {
@@ -938,6 +966,13 @@ async function navigateShell(url, push = true) {
     }
     hydrateShellContent();
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // Track SPA page view in GoatCounter
+    if (window.goatcounter && window.goatcounter.count) {
+      const targetPath = targetUrl.pathname === '/post.html'
+        ? '/post/' + (targetUrl.searchParams?.get('slug') || '')
+        : targetUrl.pathname + targetUrl.search;
+      window.goatcounter.count({ path: targetPath });
+    }
   } catch (error) {
     console.error(error);
     window.location.href = targetUrl.href;

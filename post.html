@@ -32,5 +32,13 @@
       <section class="right-panel" data-partial="right" data-page="post"></section>
     </main>
     <script src="main.js"></script>
+    <script>
+      window.goatcounter = { path: function() {
+        var slug = new URLSearchParams(location.search).get('slug');
+        return slug ? '/post/' + slug : location.pathname + location.search;
+      }};
+    </script>
+    <script data-goatcounter="https://hurutta.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
   </body>
 </html>
