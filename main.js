@@ -224,6 +224,7 @@ function applyTheme(theme, persist = true) {
     localStorage.setItem(themeStorageKey, theme);
   }
   syncThemeButtons(theme);
+  if (window.CUSDIS) window.CUSDIS.setTheme(theme);
 }
 
 function syncThemeButtons(theme) {
@@ -541,6 +542,7 @@ async function hydratePostPage() {
     contentEl.innerHTML = markdownToHtml(body);
     injectPostContentMap();
     fetchViewCount();
+    initCusdis(slug, frontmatter.title);
 
     // Check if Bengali version exists
     try {
@@ -634,6 +636,25 @@ function fetchViewCount() {
   });
   r.open("GET", url);
   r.send();
+}
+
+function initCusdis(slug, title) {
+  const el = document.getElementById("cusdis_thread");
+  if (!el) return;
+  el.setAttribute("data-host", "https://cusdis.com");
+  el.setAttribute("data-app-id", "e6de4fa4-98cf-4bf2-9ea3-d3b3afed5414");
+  el.setAttribute("data-page-id", slug);
+  el.setAttribute("data-page-url", window.location.href);
+  el.setAttribute("data-page-title", title || "Untitled");
+  el.setAttribute("data-theme", root.dataset.theme || "dark");
+  const tryInit = () => {
+    if (window.CUSDIS) {
+      window.CUSDIS.renderTo(el);
+    } else {
+      setTimeout(tryInit, 200);
+    }
+  };
+  tryInit();
 }
 
 function parseFrontMatter(source) {
