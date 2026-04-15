@@ -43,6 +43,14 @@ tags:
 
 *মুগলিং → বেসিশহর → অক্টোপাস ওয়াটারফল → চামচে ওয়াটারফল → হামদে*
 
+![Bridge on the way to Manang](assets/images/tour/nepal25/random_bridge_on_the_way_to_manag.jpeg "A bridge on the way to Manang")
+![Octopus Waterfall](assets/images/tour/nepal25/octopus_waterfall.jpeg "Octopus Waterfall")
+![Manaslu](assets/images/tour/nepal25/Manaslu.jpeg "Manaslu")
+![Waterfall along the way](assets/images/tour/nepal25/random_waterfall.jpeg "A waterfall on the way to Manang")
+![Way to Manang](assets/images/tour/nepal25/way_to_manang.jpeg "On the way to Manang")
+![Way to Manang](assets/images/tour/nepal25/way_to_manang_2.jpeg "Winding mountain roads to Manang")
+![Star gazing at Humde](assets/images/tour/nepal25/hamde_star_gazing.jpeg "Star gazing at Humde")
+
 ---
 
 ## Day 3: মানাং আর লেক | ৫ জানুয়ারি ২০২৫
@@ -50,6 +58,14 @@ tags:
 ভোরে উঠে শেষ পর্বটা শেষ করলাম — **মানাং** পৌঁছে গেলাম। প্রথমে গেলাম **গাঙ্গাপূর্ণা লেক** — পুরো লেকটা জমে বরফ হয়ে আছে, পেছনে বিশাল গাঙ্গাপূর্ণা গ্লেসিয়ার, একদম কাছ থেকে দেখলাম। সকালটা কাটলো গ্রামে ঘুরে ঘুরে, চারদিকে যে ভিউ সেটা বলে বোঝানো যাবে না। বিকেলে নামা শুরু করলাম, পথে **গ্রিন লেক** দেখলাম — অসাধারণ সুন্দর। রাতে ড্রাইভার জিপ চালিয়ে পাহাড় থেকে নামতে লাগলো।
 
 *হামদে → মানাং → গাঙ্গাপূর্ণা লেক ও গ্লেসিয়ার → গ্রিন লেক → নামা*
+
+![Frozen Gangapurna Lake](assets/images/tour/nepal25/frozen_gangapurna_lake.jpeg "Frozen Gangapurna Lake")
+![Gangapurna Glacier](assets/images/tour/nepal25/gangapurna_glacier.jpeg "Gangapurna Glacier")
+![Annapurna view from Manang](assets/images/tour/nepal25/annapurna_view_from_manang.jpeg "Annapurna range as seen from Manang")
+![Manang village](assets/images/tour/nepal25/manang.jpeg "Manang village")
+![Manang](assets/images/tour/nepal25/manaag_2.jpeg "Manang")
+![Annapurna range](assets/images/tour/nepal25/annapurna.jpeg "Annapurna range")
+![Green Lake](assets/images/tour/nepal25/green_lake.jpeg "Green Lake")
 
 ---
 
@@ -59,6 +75,9 @@ tags:
 
 *বেসিশহর → পোখারা → ফেওয়া লেক → লেকসাইড*
 
+![Besisahar](assets/images/tour/nepal25/besishahar.jpeg "Besisahar town")
+![Phewa Lake](assets/images/tour/nepal25/phewa_lake.jpeg "Phewa Lake")
+
 ---
 
 ## Day 5: পোখারা ঘোরা | ৭ জানুয়ারি ২০২৫
@@ -67,6 +86,9 @@ tags:
 
 *ওয়ার্ল্ড পিস → পোখারা সাইটসিইং → কাঠমান্ডুর পথে রওনা*
 
+![Phewa Lake](assets/images/tour/nepal25/phewa_lake_2.jpeg "Phewa Lake")
+![Phewa and Pokhara viewpoint](assets/images/tour/nepal25/phewa_and_pokhara_viewpoint.jpeg "Phewa Lake and Pokhara from the viewpoint")
+
 ---
 
 ## Day 6: রাজধানীতে ফেরা | ৮ জানুয়ারি ২০২৫
@@ -74,6 +96,9 @@ tags:
 ভোর চারটায় কাঠমান্ডু ঢুকলাম, সোজা হোটেলে গিয়ে ঘুম। উঠে সারাদিন শহর ঘুরলাম — **কাঠমান্ডু দরবার স্কয়ার** দেখলাম, **আসান** আর **ইন্দ্র চকের** বাজারে ঢুকলাম, আর **থামেলের** সরু গলিতে হারিয়ে গেলাম। কালচার একদম ভিন্ন রকম, ভালো লাগলো।
 
 *কাঠমান্ডু দরবার স্কয়ার → আসান → ইন্দ্র চক → থামেল*
+
+![Way to Durbar Square](assets/images/tour/nepal25/way_to_darbar_square.jpeg "On the way to Durbar Square")
+![Thamel](assets/images/tour/nepal25/thamel.jpeg "Thamel")
 
 ---
 

@@ -43,6 +43,14 @@ We set off early the next morning, passing through Besisahar as we wound our way
 
 *Mugling → Besisahar → Octopus Waterfall → Chamche Waterfall → Humde*
 
+![Bridge on the way to Manang](assets/images/tour/nepal25/random_bridge_on_the_way_to_manag.jpeg "A bridge on the way to Manang")
+![Octopus Waterfall](assets/images/tour/nepal25/octopus_waterfall.jpeg "Octopus Waterfall")
+![Manaslu](assets/images/tour/nepal25/Manaslu.jpeg "Manaslu")
+![Waterfall along the way](assets/images/tour/nepal25/random_waterfall.jpeg "A waterfall on the way to Manang")
+![Way to Manang](assets/images/tour/nepal25/way_to_manang.jpeg "On the way to Manang")
+![Way to Manang](assets/images/tour/nepal25/way_to_manang_2.jpeg "Winding mountain roads to Manang")
+![Star gazing at Humde](assets/images/tour/nepal25/hamde_star_gazing.jpeg "Star gazing at Humde")
+
 ---
 
 ## Day 3: Manang and the Lakes | 5 January 2025
@@ -50,6 +58,14 @@ We set off early the next morning, passing through Besisahar as we wound our way
 Early the next morning, we completed the final leg to **Manang**. Our first stop was **Gangapurna Lake** — the lake was completely frozen, and we got up close to the massive Gangapurna glacier behind it. We spent the rest of the morning exploring the village and taking in the high-altitude scenery. By afternoon, we began our descent, stopping at the stunning **Green Lake** along the way. Our driver pushed through the night, driving the jeep back down the mountain trails.
 
 *Humde → Manang → Gangapurna Lake & Glacier → Green Lake → Descent*
+
+![Frozen Gangapurna Lake](assets/images/tour/nepal25/frozen_gangapurna_lake.jpeg "Frozen Gangapurna Lake")
+![Gangapurna Glacier](assets/images/tour/nepal25/gangapurna_glacier.jpeg "Gangapurna Glacier")
+![Annapurna view from Manang](assets/images/tour/nepal25/annapurna_view_from_manang.jpeg "Annapurna range as seen from Manang")
+![Manang village](assets/images/tour/nepal25/manang.jpeg "Manang village")
+![Manang](assets/images/tour/nepal25/manaag_2.jpeg "Manang")
+![Annapurna range](assets/images/tour/nepal25/annapurna.jpeg "Annapurna range")
+![Green Lake](assets/images/tour/nepal25/green_lake.jpeg "Green Lake")
 
 ---
 
@@ -59,6 +75,9 @@ Around 4:00 AM, we reached Besisahar and caught a few hours of much-needed sleep
 
 *Besisahar → Pokhara → Phewa Lake → Lakeside*
 
+![Besisahar](assets/images/tour/nepal25/besishahar.jpeg "Besisahar town")
+![Phewa Lake](assets/images/tour/nepal25/phewa_lake.jpeg "Phewa Lake")
+
 ---
 
 ## Day 5: Exploring Pokhara | 7 January 2025
@@ -67,6 +86,9 @@ We started the morning with a visit to the **World Peace** for a panoramic viewp
 
 *World Peace → Pokhara Sightseeing → Departure for Kathmandu*
 
+![Phewa Lake](assets/images/tour/nepal25/phewa_lake_2.jpeg "Phewa Lake")
+![Phewa and Pokhara viewpoint](assets/images/tour/nepal25/phewa_and_pokhara_viewpoint.jpeg "Phewa Lake and Pokhara from the viewpoint")
+
 ---
 
 ## Day 6: Return to the Capital | 8 January 2025
@@ -74,6 +96,9 @@ We started the morning with a visit to the **World Peace** for a panoramic viewp
 We pulled into Kathmandu at approximately 4:00 AM and headed straight to our hotel to rest. After waking up, we spent the day immersed in the local culture, visiting **Kathmandu Durbar Square**, the bustling markets of **Asan and Indra Chowk**, and the narrow streets of **Thamel**.
 
 *Kathmandu Durbar Square → Asan → Indra Chowk → Thamel*
+
+![Way to Durbar Square](assets/images/tour/nepal25/way_to_darbar_square.jpeg "On the way to Durbar Square")
+![Thamel](assets/images/tour/nepal25/thamel.jpeg "Thamel")
 
 ---
 
