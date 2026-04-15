@@ -281,6 +281,14 @@ const blogData = [
         summary:
           "An 8-day loop from Colombo to Kandy, Ella, and the southern coast—sunrise hikes, scenic trains, and beach towns included.",
       },
+      {
+        slug: "travel/nepal-2025",
+        title: "Nepal Tour 2025",
+        date: "Jan 03, 2025",
+        readingTime: "5 min read",
+        summary:
+          "A 7-day adventure from Kathmandu to Manang and Pokhara—Himalayan villages, mountain lakes, and vibrant capital streets.",
+      },
     ],
   },
 ];
