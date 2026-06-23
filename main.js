@@ -550,6 +550,7 @@ async function hydratePostPage() {
     contentEl.innerHTML = markdownToHtml(body);
     injectPostContentMap();
     fetchViewCount();
+    initReactions(slug);
     initCusdis(slug, frontmatter.title);
 
     // Check if Bengali version exists
@@ -644,6 +645,102 @@ function fetchViewCount() {
   });
   r.open("GET", url);
   r.send();
+}
+
+// Reactions are powered by Lyket's REST API directly (no widget). We render
+// our own markup so we fully control the look, and toggle "like" buttons via
+// PUT .../press. The publishable token is safe in client code by design.
+const LYKET_API = "https://api.lyket.dev/v1";
+const LYKET_KEY = "pt_2ea4d4d2c171e2ad0133096676a6cc";
+const LYKET_NS = "hurutta-blog";
+
+const REACTIONS = [
+  { key: "fire", emoji: "🔥", label: "Fire" },
+  { key: "love", emoji: "❤️", label: "Love" },
+  { key: "laugh", emoji: "😂", label: "Funny" },
+  { key: "wow", emoji: "😮", label: "Wow" },
+  { key: "thumb", emoji: "👍", label: "Thumbs up" },
+];
+
+// Stable per-visitor id so Lyket can enforce one like per reaction.
+function getLyketSession() {
+  let s = localStorage.getItem("lyket-session-id");
+  if (!s) {
+    s =
+      Math.random().toString(36).slice(2) +
+      Math.random().toString(36).slice(2);
+    localStorage.setItem("lyket-session-id", s);
+  }
+  return s;
+}
+
+function lyketHeaders() {
+  return {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + LYKET_KEY,
+    "x-session-id": getLyketSession(),
+  };
+}
+
+async function lyketRequest(id, method) {
+  const suffix = method === "PUT" ? "/press" : "";
+  const url = `${LYKET_API}/like-buttons/${LYKET_NS}/${encodeURIComponent(
+    id
+  )}${suffix}`;
+  try {
+    const res = await fetch(url, { method, headers: lyketHeaders() });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data.attributes; // { total_likes, user_has_liked, ... }
+  } catch (e) {
+    return null;
+  }
+}
+
+function paintReaction(item, attrs) {
+  if (!attrs) return;
+  const total = attrs.total_likes || 0;
+  const liked = !!attrs.user_has_liked;
+  const countEl = item.querySelector(".reaction-count");
+  countEl.textContent = total;
+  countEl.classList.toggle("has-count", total > 0);
+  item.classList.toggle("is-active", liked);
+  item.setAttribute("aria-pressed", liked ? "true" : "false");
+}
+
+function initReactions(slug) {
+  const container = document.getElementById("reactionsContainer");
+  if (!container) return;
+
+  const safeSlug = slug.replace(/\//g, "-");
+  container.innerHTML = REACTIONS.map(
+    (r) => `
+      <button type="button" class="reaction-item" data-id="${safeSlug}-${r.key}"
+              title="${r.label}" aria-label="${r.label}" aria-pressed="false">
+        <span class="reaction-emoji" aria-hidden="true">${r.emoji}</span>
+        <span class="reaction-count">0</span>
+      </button>
+    `
+  ).join("");
+
+  container.querySelectorAll(".reaction-item").forEach((item) => {
+    const id = item.dataset.id;
+
+    // Load current count + whether this visitor already reacted.
+    lyketRequest(id, "GET").then((attrs) => paintReaction(item, attrs));
+
+    item.addEventListener("click", async () => {
+      if (item.dataset.busy) return;
+      item.dataset.busy = "1";
+      item.classList.remove("is-popping");
+      void item.offsetWidth; // restart the pop animation
+      item.classList.add("is-popping");
+      const attrs = await lyketRequest(id, "PUT");
+      paintReaction(item, attrs);
+      delete item.dataset.busy;
+    });
+  });
 }
 
 function initCusdis(slug, title) {
