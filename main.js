@@ -224,7 +224,6 @@ function applyTheme(theme, persist = true) {
     localStorage.setItem(themeStorageKey, theme);
   }
   syncThemeButtons(theme);
-  if (window.CUSDIS) window.CUSDIS.setTheme(theme);
 }
 
 function syncThemeButtons(theme) {
@@ -551,7 +550,7 @@ async function hydratePostPage() {
     injectPostContentMap();
     fetchViewCount();
     initReactions(slug);
-    initCusdis(slug, frontmatter.title);
+    initComments(slug);
 
     // Check if Bengali version exists
     try {
@@ -743,23 +742,40 @@ function initReactions(slug) {
   });
 }
 
-function initCusdis(slug, title) {
-  const el = document.getElementById("cusdis_thread");
-  if (!el) return;
-  el.setAttribute("data-host", "https://cusdis.com");
-  el.setAttribute("data-app-id", "e6de4fa4-98cf-4bf2-9ea3-d3b3afed5414");
-  el.setAttribute("data-page-id", slug);
-  el.setAttribute("data-page-url", window.location.href);
-  el.setAttribute("data-page-title", title || "Untitled");
-  el.setAttribute("data-theme", root.dataset.theme || "dark");
-  const tryInit = () => {
-    if (window.CUSDIS) {
-      window.CUSDIS.renderTo(el);
-    } else {
-      setTimeout(tryInit, 200);
+// Comments are powered by GraphComment (hosted, free, ad-free, social login).
+// The widget renders into #graphcomment; the post slug is the thread uid so
+// each post keeps its own thread even if the URL changes. The loader script is
+// injected once, then re-run in place on SPA navigation between posts.
+const GRAPHCOMMENT_ID = "hurutta";
+
+function initComments(slug) {
+  const container = document.getElementById("graphcomment");
+  if (!container) return;
+
+  window.__semio__params = {
+    graphcommentId: GRAPHCOMMENT_ID,
+    behaviour: { uid: slug },
+  };
+
+  // Loader already present (navigating to another post): re-render in place.
+  if (typeof window.__semio__gc_graphlogin === "function") {
+    container.innerHTML = "";
+    window.__semio__gc_graphlogin(window.__semio__params);
+    return;
+  }
+
+  // First load: inject the GraphComment loader a single time.
+  const gc = document.createElement("script");
+  gc.type = "text/javascript";
+  gc.async = true;
+  gc.defer = true;
+  gc.onload = function () {
+    if (typeof window.__semio__gc_graphlogin === "function") {
+      window.__semio__gc_graphlogin(window.__semio__params);
     }
   };
-  tryInit();
+  gc.src = "https://integration.graphcomment.com/gc_graphlogin.js?" + Date.now();
+  document.head.appendChild(gc);
 }
 
 function parseFrontMatter(source) {

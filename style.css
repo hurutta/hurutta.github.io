@@ -888,8 +888,8 @@ h2 {
   }
 }
 
-/* ── Cusdis comment section ── */
-.cusdis-wrapper {
+/* ── GraphComment comment section ── */
+.comments-wrapper {
   border: 1px solid var(--border);
   border-radius: 26px;
   padding: 1.5rem clamp(1.5rem, 4vw, 2.25rem);
@@ -900,7 +900,7 @@ h2 {
   transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
 
-.cusdis-wrapper::after {
+.comments-wrapper::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -911,23 +911,23 @@ h2 {
   pointer-events: none;
 }
 
-.cusdis-wrapper:hover::after {
+.comments-wrapper:hover::after {
   opacity: 1;
 }
 
-.cusdis-wrapper:hover {
+.comments-wrapper:hover {
   transform: translateY(-6px);
   box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
 }
 
-.cusdis-header {
+.comments-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.cusdis-header-text {
+.comments-header-text {
   margin: 0;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -935,7 +935,10 @@ h2 {
   font-size: 0.75rem;
 }
 
-#cusdis_thread {
+#graphcomment {
+  position: relative;
+  z-index: 1;
+  min-height: 160px;
   margin: 0;
   padding: 0.75rem;
   border: 1px solid var(--border);
@@ -943,30 +946,29 @@ h2 {
   background: rgba(5, 6, 10, 0.6);
 }
 
-#cusdis_thread iframe {
+#graphcomment iframe {
   width: 100% !important;
-  height: 600px !important;
   border: none !important;
   border-radius: 14px !important;
   background: transparent !important;
 }
 
-:root[data-theme="light"] .cusdis-wrapper {
+:root[data-theme="light"] .comments-wrapper {
   background: linear-gradient(135deg, #ffffff, #eef2ff);
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
-:root[data-theme="light"] .cusdis-wrapper:hover {
+:root[data-theme="light"] .comments-wrapper:hover {
   box-shadow: 0 25px 45px rgba(15, 23, 42, 0.12);
 }
 
-:root[data-theme="light"] #cusdis_thread {
+:root[data-theme="light"] #graphcomment {
   background: #f6f8ff;
   border-color: rgba(15, 23, 42, 0.08);
 }
 
 @media (max-width: 1100px) {
-  .cusdis-wrapper {
+  .comments-wrapper {
     padding: 1rem 1.1rem;
     border-radius: 18px;
   }
