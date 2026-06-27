@@ -273,6 +273,14 @@ const blogData = [
           "To be filled soon ***",
       },
       {
+        slug: "travel/thailand-2026",
+        title: "Thailand Tour 2026",
+        date: "Jun 15, 2026",
+        readingTime: "12 min read",
+        summary:
+          "A 9-day run from Bangkok down to Krabi, Railay, Koh Phi Phi, and Phuket—overnight buses, island-hopping boats, limestone cliffs, hidden lagoons, and Bangkok's markets and temples to finish.",
+      },
+      {
         slug: "travel/srilanka-2025",
         title: "Sri Lanka Tour 2025",
         date: "Nov 17, 2025",
