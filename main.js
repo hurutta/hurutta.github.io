@@ -265,14 +265,6 @@ const blogData = [
     description: "Journeys, itineraries, wandering notes",
     posts: [
       {
-        slug: "tromso-auroras",
-        title: "To be filled soon ***",
-        date: "Feb 17, ****",
-        readingTime: "6 min read",
-        summary:
-          "To be filled soon ***",
-      },
-      {
         slug: "travel/thailand-2026",
         title: "Thailand Tour 2026",
         date: "Jun 15, 2026",
