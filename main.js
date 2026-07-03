@@ -840,10 +840,58 @@ function journeyBasemapStyle() {
   return JOURNEY_BASEMAPS[stored] ? stored : "streets";
 }
 
+// Reliable street fallback (keyless CARTO) if the primary street tiles keep
+// failing — e.g. transient Stadia throttling or a regional CDN hiccup.
+const JOURNEY_STREET_FALLBACK = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+
+// Leaflet never retries a failed tile, so one throttled burst leaves gray
+// holes until the next zoom. This wrapper retries each failed tile up to 3
+// times with backoff, and if too many tiles stay dead it swaps the layer to
+// the fallback URL so the reader never sits on a gray map.
+function resilientTileLayer(url, options, fallbackUrl) {
+  const layer = window.L.tileLayer(url, options);
+  const attempts = new Map();
+  let deadTiles = 0;
+  let fellBack = false;
+  layer.on("tileload", (e) => {
+    if (e.coords) attempts.delete(`${e.coords.x}:${e.coords.y}:${e.coords.z}`);
+  });
+  layer.on("tileerror", (e) => {
+    if (fellBack || !e.coords || !e.tile) return;
+    const key = `${e.coords.x}:${e.coords.y}:${e.coords.z}`;
+    const n = (attempts.get(key) || 0) + 1;
+    attempts.set(key, n);
+    if (n <= 3) {
+      const base = e.tile.src.split(/[?&]retry=/)[0];
+      const sep = base.includes("?") ? "&" : "?";
+      setTimeout(() => {
+        if (e.tile.isConnected) e.tile.src = `${base}${sep}retry=${n}`;
+      }, 500 * n * n); // 0.5s, 2s, 4.5s
+      return;
+    }
+    deadTiles += 1;
+    if (fallbackUrl && deadTiles >= 5) {
+      fellBack = true;
+      attempts.clear();
+      layer.setUrl(fallbackUrl);
+    }
+  });
+  return layer;
+}
+
 function applyJourneyBasemap(entry) {
-  const style = JOURNEY_BASEMAPS[journeyBasemapStyle()];
+  const styleKey = journeyBasemapStyle();
+  const style = JOURNEY_BASEMAPS[styleKey];
   entry.layers.forEach((layer) => entry.map.removeLayer(layer));
-  entry.layers = style.layers().map(([url, attribution, extra]) => window.L.tileLayer(url, { maxZoom: 18, attribution, ...(extra || {}) }).addTo(entry.map));
+  entry.layers = style.layers().map(([url, attribution, extra], i) => {
+    // updateWhenZooming:false skips fetching tiles for every intermediate
+    // zoom level mid-flight — far fewer bursty requests (throttling trigger)
+    // and lower credit burn. keepBuffer keeps recently-seen tiles around for
+    // the looping animation to reuse.
+    const options = { maxZoom: 18, attribution, updateWhenZooming: false, keepBuffer: 4, ...(extra || {}) };
+    const fallback = styleKey === "streets" && i === 0 ? JOURNEY_STREET_FALLBACK : null;
+    return resilientTileLayer(url, options, fallback).addTo(entry.map);
+  });
   entry.btn.textContent = style.button;
   entry.btn.title = style.title;
 }
