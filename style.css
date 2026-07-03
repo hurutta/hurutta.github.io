@@ -2718,3 +2718,156 @@ body[data-page="post"] .content-map-links a {
     transform: translateY(0);
   }
 }
+
+/* Journey map (Leaflet route visualization inside posts) */
+.journey-map {
+  height: 400px;
+  margin: 28px 0;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--card-surface);
+  z-index: 0;
+}
+
+
+.journey-route {
+  stroke: var(--accent-2);
+  stroke-opacity: 0.9;
+}
+
+.journey-route-boat,
+.journey-route-train {
+  stroke: var(--accent);
+}
+
+.journey-traveler {
+  background: none;
+  border: none;
+}
+
+.journey-traveler span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  font-size: 19px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+.journey-route-future {
+  stroke-opacity: 0.3;
+}
+
+
+.journey-stop-tip {
+  background: var(--card-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+}
+
+.journey-stop-tip::before {
+  border-top-color: var(--card-surface);
+}
+
+.journey-tip-note {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.journey-map-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--card-surface);
+  border: 1px solid var(--border);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.journey-follow-btn {
+  opacity: 0.55;
+}
+
+.journey-follow-btn.is-on {
+  opacity: 1;
+  border-color: var(--accent-2);
+}
+
+.journey-stop-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.journey-map .leaflet-popup-content-wrapper {
+  background: var(--card-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+}
+
+.journey-map .leaflet-popup-tip {
+  background: var(--card-surface);
+}
+
+.journey-map .leaflet-popup-content {
+  margin: 10px 14px;
+  font-family: inherit;
+}
+
+.journey-pop strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.journey-pop-note {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.journey-map .leaflet-control-attribution {
+  background: var(--card-surface);
+  color: var(--text);
+  opacity: 0.75;
+  font-size: 10px;
+}
+
+.journey-map .leaflet-control-attribution a {
+  color: var(--accent-2);
+}
+
+.journey-map .leaflet-bar a {
+  background: var(--card-surface);
+  color: var(--text);
+  border-bottom-color: var(--border);
+}
+
+@media (max-width: 640px) {
+  .journey-map {
+    height: 320px;
+  }
+}

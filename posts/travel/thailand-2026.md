@@ -29,6 +29,17 @@ Nine days across Thailand — **Bangkok → Krabi → Ao Nang → Railay → Koh
 | 8   | Bangkok Culture        | Grand Palace, Khao San Road, Chinatown, Khlong Toei Market, Terminal 21              | Bangkok |
 | 9   | Departure              | BTS Skytrain, Airport Rail Link, flight home to Dhaka                                | - |
 
+```journey
+route: assets/routes/thailand-2026.json
+Bangkok | 13.7563, 100.5018 | Day 1 · Arrival
+Krabi Town | 8.0863, 98.9063 | Day 2 · Morning arrival by overnight bus
+Ao Nang | 8.0327, 98.8177 | Days 2–3 · Beaches & night market
+Railay | 8.0119, 98.8372 | Day 3 · Beaches, caves & cliffs
+Koh Phi Phi | 7.7407, 98.7784 | Days 4–5 · Island life
+Phuket Old Town | 7.8850, 98.3875 | Day 6 · Old Town streets
+Bangkok | 13.7563, 100.5018 | Days 7–9 · City days & departure
+```
+
 ---
 
 ## Day 1: Arrival in Bangkok & Overnight Journey to Krabi

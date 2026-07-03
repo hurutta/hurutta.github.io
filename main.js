@@ -548,6 +548,7 @@ async function hydratePostPage() {
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
     injectPostContentMap();
+    initJourneyMaps();
     fetchViewCount();
     initReactions(slug);
     initComments(slug);
@@ -595,6 +596,7 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
     injectPostContentMap();
+    initJourneyMaps();
     currentLang = lang;
     localStorage.setItem(langStorageKey, lang);
 
@@ -778,6 +780,426 @@ function initComments(slug) {
   document.head.appendChild(gc);
 }
 
+// Journey maps are rendered with Leaflet (vendored locally) over OpenStreetMap
+// tiles. The library is lazy-loaded only when a post actually contains a
+// ```journey block, so regular pages pay zero cost.
+let leafletLoader = null;
+
+function loadLeaflet() {
+  if (window.L) return Promise.resolve();
+  if (leafletLoader) return leafletLoader;
+  leafletLoader = new Promise((resolve, reject) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "assets/vendor/leaflet/leaflet.css";
+    document.head.appendChild(css);
+    const script = document.createElement("script");
+    script.src = "assets/vendor/leaflet/leaflet.js";
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return leafletLoader;
+}
+
+// Basemaps (free, no API key). Default is a satellite hybrid — Esri World
+// Imagery with a CARTO place-label overlay — with a per-map toggle to a
+// street style (CARTO Voyager / Dark Matter, following the site theme).
+const JOURNEY_BASEMAPS = {
+  satellite: {
+    layers: () => [
+      ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Imagery &copy; <a href=\"https://www.esri.com/\">Esri</a>, Maxar, Earthstar Geographics"],
+      ["https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png", '&copy; <a href="https://carto.com/attributions">CARTO</a>'],
+    ],
+    button: "🗺️",
+    title: "Switch to street map",
+  },
+  // Stadia tiles authenticate by domain: localhost is always allowed, and
+  // hurutta.github.io must be whitelisted in the Stadia dashboard (free plan).
+  streets: {
+    layers: () => [
+      [
+        "https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png",
+        '&copy; <a href="https://www.stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      ],
+    ],
+    button: "🛰️",
+    title: "Switch to satellite view",
+  },
+};
+const JOURNEY_MODES = {
+  bus: { emoji: "🚌", weight: 4, opacity: 0.9 },
+  boat: { emoji: "🚤", weight: 3, opacity: 0.9, dashArray: "7 9" },
+  train: { emoji: "🚆", weight: 4, opacity: 0.9, dashArray: "2 8", lineCap: "round" },
+};
+const journeyBasemapKey = "journeyBasemap";
+const journeyMapRegistry = [];
+
+function journeyBasemapStyle() {
+  const stored = localStorage.getItem(journeyBasemapKey);
+  return JOURNEY_BASEMAPS[stored] ? stored : "streets";
+}
+
+function applyJourneyBasemap(entry) {
+  const style = JOURNEY_BASEMAPS[journeyBasemapStyle()];
+  entry.layers.forEach((layer) => entry.map.removeLayer(layer));
+  entry.layers = style.layers().map(([url, attribution, extra]) => window.L.tileLayer(url, { maxZoom: 18, attribution, ...(extra || {}) }).addTo(entry.map));
+  entry.btn.textContent = style.button;
+  entry.btn.title = style.title;
+}
+
+function initJourneyMaps() {
+  const containers = document.querySelectorAll(".journey-map[data-stops]");
+  if (!containers.length) return;
+  // Lazy-init: Leaflet and map tiles only load once the reader actually
+  // scrolls the map into view — readers who never reach it cost zero tiles.
+  const boot = (el) => {
+    loadLeaflet()
+      .then(() => {
+        renderJourneyMap(el);
+      })
+      .catch(() => {
+        el.style.display = "none"; // Leaflet unavailable — drop the placeholder
+      });
+  };
+  if (!("IntersectionObserver" in window)) {
+    containers.forEach(boot);
+    return;
+  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        boot(entry.target);
+      });
+    },
+    { rootMargin: "300px 0px" }
+  );
+  containers.forEach((el) => observer.observe(el));
+}
+
+async function renderJourneyMap(el) {
+  if (el.dataset.ready) return;
+  el.dataset.ready = "1";
+  let stops;
+  try {
+    stops = JSON.parse(decodeURIComponent(el.dataset.stops));
+  } catch (_) {
+    return;
+  }
+
+  // Precomputed geometry: actual roads (OSRM), rail corridor, sea arcs.
+  // Falls back to straight lines between stops if the file is missing.
+  let segments = null;
+  if (el.dataset.route) {
+    try {
+      const res = await fetch(el.dataset.route);
+      if (res.ok) segments = (await res.json()).segments;
+    } catch (_) {
+      /* fall back below */
+    }
+  }
+  if (!segments || !segments.length) {
+    segments = [{ mode: "bus", coords: stops.map((s) => [s.lat, s.lng]) }];
+  }
+
+  const L = window.L;
+  // zoomSnap: 0 permits fractional zoom levels — without it the chase-cam's
+  // flyTo transitions quantize to whole zoom steps and look jittery.
+  const map = L.map(el, { scrollWheelZoom: false, zoomSnap: 0 });
+
+  // Basemap + the satellite/streets toggle control (Google-Maps style)
+  const basemapBtn = L.DomUtil.create("button", "journey-map-btn journey-basemap-btn");
+  basemapBtn.type = "button";
+  const registryEntry = { map, layers: [], btn: basemapBtn };
+  journeyMapRegistry.push(registryEntry);
+  applyJourneyBasemap(registryEntry);
+  basemapBtn.addEventListener("click", () => {
+    localStorage.setItem(journeyBasemapKey, journeyBasemapStyle() === "satellite" ? "streets" : "satellite");
+    journeyMapRegistry.forEach(applyJourneyBasemap);
+  });
+  const BasemapControl = L.Control.extend({
+    onAdd() {
+      L.DomEvent.disableClickPropagation(basemapBtn);
+      return basemapBtn;
+    },
+  });
+  new BasemapControl({ position: "topright" }).addTo(map);
+
+  // One leg per hop between consecutive stops. When the precomputed geometry
+  // doesn't line up with the stop list, fall back to straight hops.
+  let legs;
+  if (segments.length === stops.length - 1) {
+    legs = segments.map((seg, i) => ({ mode: seg.mode, coords: seg.coords, from: stops[i], to: stops[i + 1] }));
+  } else {
+    legs = stops.slice(1).map((s, i) => ({
+      mode: "bus",
+      coords: [
+        [stops[i].lat, stops[i].lng],
+        [s.lat, s.lng],
+      ],
+      from: stops[i],
+      to: s,
+    }));
+  }
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const allCoords = [];
+  const routeLines = []; // every polyline with its authored stroke, for zoom compensation
+  const trackLine = (line, mode) => {
+    const style = JOURNEY_MODES[mode] || JOURNEY_MODES.bus;
+    routeLines.push({ line, weight: style.weight, dash: style.dashArray ? style.dashArray.split(" ").map(Number) : null });
+    return line;
+  };
+  legs.forEach((leg) => {
+    // Future (not yet traveled) path is faded; a progress line is painted
+    // over it as the traveler advances — Google-Maps-navigation style.
+    trackLine(L.polyline(leg.coords, journeyLineOptions(leg.mode, !reducedMotion)).addTo(map), leg.mode);
+    if (!reducedMotion) leg.progressLine = trackLine(L.polyline([], journeyLineOptions(leg.mode, false)).addTo(map), leg.mode);
+    allCoords.push(...leg.coords);
+  });
+
+  // Merge stops that share coordinates (e.g. a return to the starting city)
+  // into a single marker whose popup lists every visit.
+  const merged = new Map();
+  stops.forEach((s, idx) => {
+    const key = `${s.lat},${s.lng}`;
+    if (merged.has(key)) {
+      if (s.note) merged.get(key).notes.push(s.note);
+    } else {
+      merged.set(key, { name: s.name, lat: s.lat, lng: s.lng, order: idx + 1, notes: s.note ? [s.note] : [] });
+    }
+  });
+  merged.forEach((s) => {
+    const icon = L.divIcon({
+      className: "journey-stop",
+      html: `<span class="journey-stop-pin">${s.order}</span>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+    const notesHtml = s.notes.map((n) => `<div class="journey-pop-note">${n}</div>`).join("");
+    L.marker([s.lat, s.lng], { icon }).addTo(map).bindPopup(`<div class="journey-pop"><strong>${s.name}</strong>${notesHtml}</div>`);
+  });
+
+  const overviewBounds = L.latLngBounds(allCoords);
+  map.fitBounds(overviewBounds, { padding: [36, 36] });
+
+  // During zoom animations Leaflet CSS-scales the vector pane by 2^Δzoom and
+  // only redraws the paths at the end — momentarily fattening the strokes.
+  // Counter-scale stroke width and dash pattern every animation frame so the
+  // lines keep a constant on-screen width throughout the flight.
+  let renderZoom = map.getZoom();
+  let strokeScaled = false;
+  const resetStrokes = () => {
+    renderZoom = map.getZoom();
+    if (!strokeScaled) return;
+    strokeScaled = false;
+    routeLines.forEach(({ line, weight, dash }) => line.setStyle({ weight, dashArray: dash ? dash.join(" ") : null }));
+  };
+  map.on("zoom", () => {
+    const scale = map.getZoomScale(map.getZoom(), renderZoom);
+    if (scale === 1) return;
+    strokeScaled = true;
+    routeLines.forEach(({ line, weight, dash }) =>
+      line.setStyle({ weight: weight / scale, dashArray: dash ? dash.map((n) => n / scale).join(" ") : null })
+    );
+  });
+  map.on("zoomend viewreset", resetStrokes);
+
+  if (!reducedMotion) startJourneyTraveler(map, legs, stops, overviewBounds);
+}
+
+function journeyLineOptions(mode, future) {
+  const style = JOURNEY_MODES[mode] || JOURNEY_MODES.bus;
+  return {
+    className: `journey-route journey-route-${mode}${future ? " journey-route-future" : ""}`,
+    weight: style.weight,
+    opacity: style.opacity,
+    dashArray: style.dashArray || null,
+    lineCap: style.lineCap || "butt",
+    interactive: false,
+  };
+}
+
+// A little vehicle replays the whole trip on loop: it travels each leg with
+// the camera following (zoomed to that leg), pauses at every checkpoint with
+// a name bubble, and paints the traveled path in full color while the road
+// ahead stays faded. Dragging or zooming hands the camera back to the reader;
+// the 🎥 control re-engages the chase cam or pops back to the overview.
+function startJourneyTraveler(map, legs, stops, overviewBounds) {
+  const L = window.L;
+
+  legs.forEach((leg) => {
+    const d = [0];
+    for (let i = 1; i < leg.coords.length; i++) {
+      const dLat = leg.coords[i][0] - leg.coords[i - 1][0];
+      const dLng = (leg.coords[i][1] - leg.coords[i - 1][1]) * Math.cos((leg.coords[i][0] * Math.PI) / 180);
+      d.push(d[i - 1] + Math.sqrt(dLat * dLat + dLng * dLng));
+    }
+    leg.dist = d;
+    leg.total = d[d.length - 1] || 1e-9;
+    const km = leg.total * 111;
+    leg.duration = 2600 + Math.min(4800, km * 9);
+    leg.zoom = Math.max(5, Math.min(13, map.getBoundsZoom(L.latLngBounds(leg.coords).pad(0.4))));
+  });
+
+  const icons = {};
+  const iconFor = (mode) => {
+    if (!icons[mode]) {
+      const emoji = (JOURNEY_MODES[mode] || JOURNEY_MODES.bus).emoji;
+      icons[mode] = L.divIcon({
+        className: "journey-traveler",
+        html: `<span>${emoji}</span>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+    }
+    return icons[mode];
+  };
+
+  const marker = L.marker(legs[0].coords[0], { icon: iconFor(legs[0].mode), interactive: false, keyboard: false, zIndexOffset: 500 }).addTo(map);
+  const tip = L.tooltip({ direction: "top", offset: [0, -16], className: "journey-stop-tip", interactive: false });
+
+  let follow = true;
+  let programmatic = false;
+  let flying = false; // a flyTo transition is in progress — hands off the camera
+
+  // Camera moves come in two flavours: panCam is the cheap per-frame pan at a
+  // FIXED zoom (travel), flyCam/flyOverview are single smooth animated
+  // transitions used only while the vehicle is paused — zoom never changes
+  // mid-travel, which is what keeps the chase cam judder-free.
+  function panCam(center, zoom) {
+    programmatic = true;
+    map.setView(center, zoom, { animate: false });
+    programmatic = false;
+  }
+  function flyCam(center, zoom) {
+    flying = true;
+    programmatic = true;
+    map.flyTo(center, zoom, { duration: 1.1 });
+    programmatic = false;
+  }
+  function flyOverview() {
+    flying = true;
+    programmatic = true;
+    map.flyToBounds(overviewBounds, { padding: [36, 36], duration: 1.3 });
+    programmatic = false;
+  }
+  map.on("moveend", () => {
+    flying = false;
+  });
+
+  const followBtn = L.DomUtil.create("button", "journey-map-btn journey-follow-btn is-on");
+  followBtn.type = "button";
+  followBtn.textContent = "🎥";
+  const setFollow = (v) => {
+    follow = v;
+    followBtn.classList.toggle("is-on", v);
+    followBtn.title = v ? "Following the journey — click for full-route view" : "Click to follow the journey";
+  };
+  setFollow(true);
+  followBtn.addEventListener("click", () => {
+    if (follow) {
+      setFollow(false);
+      flyOverview();
+    } else {
+      setFollow(true);
+      flyCam(marker.getLatLng(), legs[legIndex].zoom);
+    }
+  });
+  const FollowControl = L.Control.extend({
+    onAdd() {
+      L.DomEvent.disableClickPropagation(followBtn);
+      return followBtn;
+    },
+  });
+  new FollowControl({ position: "topright" }).addTo(map);
+  map.on("dragstart", () => setFollow(false));
+  map.on("zoomstart", () => {
+    if (!programmatic) setFollow(false);
+  });
+
+  const DWELL_MS = 2100;
+  const FINALE_MS = 3400; // longer pause on the completed route overview
+  let legIndex = 0;
+  let phase = "dwell"; // open by introducing the first stop
+  let phaseStart = null;
+  let pendingReset = false;
+
+  const showStopTip = (stop) => {
+    const note = stop.note ? `<span class="journey-tip-note">${stop.note}</span>` : "";
+    tip.setContent(`<strong>${stop.name}</strong>${note}`).setLatLng([stop.lat, stop.lng]).addTo(map);
+  };
+
+  const resetLoop = () => {
+    legs.forEach((leg) => leg.progressLine.setLatLngs([]));
+    legIndex = 0;
+    marker.setLatLng(legs[0].coords[0]);
+    marker.setIcon(iconFor(legs[0].mode));
+  };
+
+  function frame(now) {
+    if (!map._loaded || !map._container.isConnected) return; // map torn down (SPA nav)
+    if (phaseStart === null) {
+      phaseStart = now;
+      showStopTip(stops[0]);
+      if (follow) flyCam([stops[0].lat, stops[0].lng], legs[0].zoom);
+    }
+
+    if (phase === "dwell") {
+      if (now - phaseStart >= (pendingReset ? FINALE_MS : DWELL_MS)) {
+        tip.remove();
+        if (pendingReset) {
+          pendingReset = false;
+          resetLoop();
+          phaseStart = now;
+          showStopTip(stops[0]);
+          if (follow) flyCam(legs[0].coords[0], legs[0].zoom);
+        } else {
+          phase = "travel";
+          phaseStart = now;
+          marker.setIcon(iconFor(legs[legIndex].mode));
+        }
+      }
+      requestAnimationFrame(frame);
+      return;
+    }
+
+    const leg = legs[legIndex];
+    const t = Math.min(1, (now - phaseStart) / leg.duration);
+    const dTarget = t * leg.total;
+    let i = 1;
+    while (i < leg.dist.length - 1 && leg.dist[i] < dTarget) i++;
+    const f = (dTarget - leg.dist[i - 1]) / (leg.dist[i] - leg.dist[i - 1] || 1);
+    const lat = leg.coords[i - 1][0] + (leg.coords[i][0] - leg.coords[i - 1][0]) * f;
+    const lng = leg.coords[i - 1][1] + (leg.coords[i][1] - leg.coords[i - 1][1]) * f;
+    marker.setLatLng([lat, lng]);
+    leg.progressLine.setLatLngs([...leg.coords.slice(0, i), [lat, lng]]);
+
+    // Constant-zoom pan only; zoom reframing happened during the dwell pause
+    if (follow && !flying) panCam([lat, lng], leg.zoom);
+
+    if (t >= 1) {
+      leg.progressLine.setLatLngs(leg.coords);
+      const arrived = stops[legIndex + 1];
+      showStopTip(arrived);
+      if (legIndex === legs.length - 1) {
+        pendingReset = true;
+        if (follow) flyOverview(); // journey complete — pull back to see it all
+      } else {
+        legIndex += 1;
+        // reframe for the upcoming leg while the vehicle is parked
+        if (follow) flyCam([arrived.lat, arrived.lng], legs[legIndex].zoom);
+      }
+      phase = "dwell";
+      phaseStart = now;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 function parseFrontMatter(source) {
   if (source.startsWith("---")) {
     const end = source.indexOf("\n---", 3);
@@ -881,6 +1303,37 @@ function markdownToHtml(markdown) {
       closeList();
       flushImages();
       html += `<div class="md-divider"><span class="md-divider-ornament"></span></div>`;
+      continue;
+    }
+
+    // Journey map block: ```journey ... ``` with one "Name | lat, lng | note"
+    // per line, plus an optional "route: <geometry file>" line pointing at
+    // precomputed road/sea geometry in assets/routes/.
+    if (trimmed === "```journey") {
+      flushParagraph();
+      closeList();
+      flushImages();
+      const stops = [];
+      let routeFile = "";
+      while (i + 1 < lines.length && lines[i + 1].trim() !== "```") {
+        i += 1;
+        const entry = lines[i].trim();
+        const routeMatch = entry.match(/^route:\s*(.+)$/);
+        if (routeMatch) {
+          routeFile = routeMatch[1];
+          continue;
+        }
+        const parts = entry.split("|").map((p) => p.trim());
+        if (parts.length < 2) continue;
+        const coords = parts[1].split(",").map(Number);
+        if (coords.length !== 2 || coords.some(Number.isNaN)) continue;
+        stops.push({ name: parts[0], lat: coords[0], lng: coords[1], note: parts[2] || "" });
+      }
+      if (i + 1 < lines.length) i += 1; // consume closing fence
+      if (stops.length >= 2) {
+        const routeAttr = routeFile ? ` data-route="${routeFile}"` : "";
+        html += `<div class="journey-map" data-stops="${encodeURIComponent(JSON.stringify(stops))}"${routeAttr}></div>`;
+      }
       continue;
     }
 

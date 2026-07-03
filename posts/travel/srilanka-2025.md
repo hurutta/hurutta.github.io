@@ -28,6 +28,18 @@ Eight days across Sri Lanka (12–19 October 2025) — **Colombo → Kandy → E
 | 7   | Galle           | Rampart walk, lighthouse photos, Dutch Hospital boutiques                               | Colombo |
 | 8   | Colombo         | Lotus Tower, Pettah Market, Pettah Floating Market, airport transfer                    | - |
 
+```journey
+route: assets/routes/srilanka-2025.json
+Colombo | 6.9271, 79.8612 | Day 1 · Midnight arrival
+Kandy | 7.2906, 80.6337 | Days 1–2 · Hill capital & lake
+Ella | 6.8667, 81.0462 | Days 2–3 · Blue train, trails & waterfalls
+Mirissa | 5.9483, 80.4589 | Day 4 · Coconut Tree Hill & beaches
+Ahangama | 5.9739, 80.3623 | Day 5 · Surf town & stilt fishermen
+Unawatuna | 6.0174, 80.2489 | Day 6 · Beach hopping
+Galle | 6.0328, 80.2170 | Day 7 · Galle Fort ramparts
+Colombo | 6.9271, 79.8612 | Day 8 · Lotus Tower & departure
+```
+
 ---
 
 ## Day 1: Midnight Arrival and Into the Hills of Kandy | 12 October 2025

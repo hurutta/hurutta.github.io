@@ -27,6 +27,18 @@ Seven days across Nepal (3–9 January 2025) — **Kathmandu → Manang → Pokh
 | 6   | Kathmandu            | Durbar Square, Asan & Indra Chowk markets, Thamel                                   | Kathmandu   |
 | 7   | Departure            | Airport transfer, flight home                                                        | -           |
 
+```journey
+route: assets/routes/nepal-2025.json
+Kathmandu | 27.7172, 85.3240 | Day 1 · Arrival
+Mugling | 27.8560, 84.5630 | Day 1 · Overnight stop
+Besisahar | 28.2306, 84.3782 | Day 2 · Gateway to the Himalayas
+Humde | 28.6417, 84.0889 | Day 2 · Overnight in the mountains
+Manang | 28.6667, 84.0167 | Day 3 · Frozen lakes & glacier
+Besisahar | 28.2306, 84.3782 | Day 3–4 · Descent
+Pokhara | 28.2096, 83.9856 | Days 4–5 · Phewa Lake & lakeside
+Kathmandu | 27.7172, 85.3240 | Days 6–7 · Old city & departure
+```
+
 ---
 
 ## Day 1: Arrival and the Journey Begins | 3 January 2025
