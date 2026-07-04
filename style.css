@@ -2522,6 +2522,67 @@ body[data-page="post"] .content-map-links a {
   word-break: break-word;
 }
 
+.edu-highlights {
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.edu-highlights li {
+  position: relative;
+  padding-left: 1.15rem;
+}
+
+.edu-highlights li::before {
+  content: "▹";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.edu-block {
+  margin-top: 1.15rem;
+}
+
+.edu-chips {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.edu-chips span {
+  border-radius: 999px;
+  border: 1px solid rgba(130, 255, 218, 0.4);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.82rem;
+  background: rgba(130, 255, 218, 0.08);
+}
+
+.edu-capstone {
+  border-left: 2px solid var(--accent);
+  padding-left: 1rem;
+}
+
+.edu-capstone-title {
+  margin: 0.45rem 0 0;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.edu-capstone-desc {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .skills-list {
   margin: 0.75rem 0 0;
   padding: 0 0 0 1.1rem;
