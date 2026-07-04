@@ -305,6 +305,17 @@ function initBlogBrowser() {
 
   if (!categoryList || !postList || !articlePreview) return;
 
+  // Header stats, computed from the registry so they stay honest
+  const statsEl = document.getElementById("blogStats");
+  if (statsEl) {
+    const storyCount = blogData.reduce((sum, cat) => sum + cat.posts.length, 0);
+    statsEl.innerHTML = [
+      `<span class="blog-stat"><strong>${storyCount}</strong> stories</span>`,
+      `<span class="blog-stat"><strong>${blogData.length}</strong> categories</span>`,
+      `<span class="blog-stat"><strong>2</strong> languages</span>`,
+    ].join("");
+  }
+
   let activeCategory = null;
   let activePost = null;
 

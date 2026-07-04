@@ -361,6 +361,47 @@ h2 {
   gap: 1.5rem;
 }
 
+.blog-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.blog-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.blog-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-surface);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.blog-stat strong {
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+
+.blog-manual {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.blog-manual strong {
+  color: var(--text);
+}
+
 .blog-browser {
   display: flex;
   flex-direction: column;
