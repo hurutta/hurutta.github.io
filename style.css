@@ -1789,12 +1789,13 @@ body[data-page="post"] .content-map-links a {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px;
 }
 
 .credential-logo img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .credential-card h4 {
