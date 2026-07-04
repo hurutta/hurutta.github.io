@@ -1058,6 +1058,69 @@ async function renderJourneyMap(el) {
   if (!reducedMotion) startJourneyTraveler(map, legs, stops, overviewBounds);
 }
 
+// --- Journey tile prefetch --------------------------------------------------
+// The journey is deterministic: each leg's path and camera zoom are known
+// before the camera gets there. While leg N plays, leg N+1's tile corridor is
+// quietly warmed into the browser's HTTP cache (gently, 4 at a time), so the
+// chase cam almost never reveals an unloaded tile. Cache hits never reach the
+// tile server, so a prefetched tile is paid for once.
+
+// Tiles the viewport will sweep over along `coords` at the camera zoom.
+// Leaflet renders fractional zooms with tiles from Math.round(zoom) — the
+// grid here must match that exactly or the whole prefetch warms the wrong
+// cache.
+function journeyCorridorTiles(coords, zoom, sizePx) {
+  const tz = Math.round(zoom);
+  const n = Math.pow(2, tz);
+  const scale = Math.pow(2, tz - zoom); // tile-zoom pixels per screen pixel
+  const halfW = (sizePx.x / 2) * scale + 32;
+  const halfH = (sizePx.y / 2) * scale + 32;
+  const seen = new Set();
+  const tiles = [];
+  coords.forEach(([lat, lng]) => {
+    const px = ((lng + 180) / 360) * 256 * n;
+    const latR = (lat * Math.PI) / 180;
+    const py = ((1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2) * 256 * n;
+    const x0 = Math.floor((px - halfW) / 256);
+    const x1 = Math.floor((px + halfW) / 256);
+    const y0 = Math.floor((py - halfH) / 256);
+    const y1 = Math.floor((py + halfH) / 256);
+    for (let x = x0; x <= x1; x += 1) {
+      for (let y = y0; y <= y1; y += 1) {
+        if (y < 0 || y >= n) continue;
+        const wx = ((x % n) + n) % n;
+        const key = `${wx}:${y}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          tiles.push({ x: wx, y, z: tz });
+        }
+      }
+    }
+  });
+  return tiles;
+}
+
+// Build the exact URL Leaflet will request for this tile — same template,
+// same retina token, same subdomain formula. One character of drift means a
+// cache miss and the tile gets paid for twice. (layer._url is technically
+// private but stable across Leaflet 1.x, and is authoritative after setUrl.)
+function journeyPrefetchUrl(layer, tile) {
+  const subs = layer.options.subdomains || "";
+  return window.L.Util.template(
+    layer._url,
+    window.L.Util.extend(
+      {
+        r: window.L.Browser.retina ? "@2x" : "",
+        s: subs.length ? subs[Math.abs(tile.x + tile.y) % subs.length] : "",
+        x: tile.x,
+        y: tile.y,
+        z: tile.z,
+      },
+      layer.options
+    )
+  );
+}
+
 function journeyLineOptions(mode, future) {
   const style = JOURNEY_MODES[mode] || JOURNEY_MODES.bus;
   return {
@@ -1175,6 +1238,42 @@ function startJourneyTraveler(map, legs, stops, overviewBounds) {
   let phaseStart = null;
   let pendingReset = false;
 
+  // One-leg-ahead tile prefetch (see journeyCorridorTiles). Deduped across
+  // the whole session so loop replays and repeated triggers cost nothing.
+  const prefetchedUrls = new Set();
+  function prefetchLeg(idx) {
+    if (!follow || idx >= legs.length) return;
+    const entry = journeyMapRegistry.find((e) => e.map === map);
+    if (!entry) return;
+    let tiles = journeyCorridorTiles(legs[idx].coords, legs[idx].zoom, map.getSize());
+    if (tiles.length > 120) tiles = tiles.slice(0, 120); // volume backstop
+    const queue = [];
+    entry.layers.forEach((layer) => {
+      if (!layer._url || layer._url.indexOf("{x}") === -1) return;
+      tiles.forEach((tile) => {
+        const url = journeyPrefetchUrl(layer, tile);
+        if (!prefetchedUrls.has(url)) {
+          prefetchedUrls.add(url);
+          queue.push(url);
+        }
+      });
+    });
+    let active = 0;
+    const pump = () => {
+      if (!map._loaded || !map._container.isConnected || !follow) return;
+      while (active < 4 && queue.length) {
+        const img = new Image();
+        active += 1;
+        img.onload = img.onerror = () => {
+          active -= 1;
+          pump();
+        };
+        img.src = queue.shift();
+      }
+    };
+    pump();
+  }
+
   const showStopTip = (stop) => {
     const note = stop.note ? `<span class="journey-tip-note">${stop.note}</span>` : "";
     tip.setContent(`<strong>${stop.name}</strong>${note}`).setLatLng([stop.lat, stop.lng]).addTo(map);
@@ -1193,6 +1292,7 @@ function startJourneyTraveler(map, legs, stops, overviewBounds) {
       phaseStart = now;
       showStopTip(stops[0]);
       if (follow) flyCam([stops[0].lat, stops[0].lng], legs[0].zoom);
+      prefetchLeg(0); // warm the first leg's corridor during the opening pause
     }
 
     if (phase === "dwell") {
@@ -1208,6 +1308,7 @@ function startJourneyTraveler(map, legs, stops, overviewBounds) {
           phase = "travel";
           phaseStart = now;
           marker.setIcon(iconFor(legs[legIndex].mode));
+          prefetchLeg(legIndex + 1); // warm the next leg while this one plays
         }
       }
       requestAnimationFrame(frame);
