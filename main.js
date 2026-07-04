@@ -1647,6 +1647,7 @@ hydrateShellContent();
 // --- Shell navigation -----------------------------------------------------
 const shellSupportsSPA = "pushState" in window.history && typeof window.fetch === "function";
 let isShellNavigating = false;
+let pendingShellNav = null;
 
 if (shellSupportsSPA) {
   initShellNavigation();
@@ -1656,7 +1657,9 @@ function initShellNavigation() {
   document.addEventListener("click", handleShellLinkClick);
   window.addEventListener("popstate", (event) => {
     const target = event.state?.url || window.location.pathname + window.location.search;
-    navigateShell(target, false);
+    // force: by the time popstate fires the browser has already updated the
+    // location, so the same-URL guard in navigateShell would always bail.
+    navigateShell(target, false, true);
   });
   window.history.replaceState({ url: window.location.pathname + window.location.search }, "", window.location.pathname + window.location.search);
 }
@@ -1679,10 +1682,15 @@ function handleShellLinkClick(event) {
   navigateShell(targetUrl, true);
 }
 
-async function navigateShell(url, push = true) {
-  if (isShellNavigating) return;
+async function navigateShell(url, push = true, force = false) {
+  if (isShellNavigating) {
+    // e.g. two quick back presses: remember the newest target and run it
+    // once the in-flight swap finishes, instead of silently dropping it
+    pendingShellNav = { url, push, force };
+    return;
+  }
   const targetUrl = typeof url === "string" ? new URL(url, window.location.href) : url;
-  if (targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) return;
+  if (!force && targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) return;
 
   isShellNavigating = true;
   document.body.classList.add("is-shell-loading");
@@ -1723,6 +1731,11 @@ async function navigateShell(url, push = true) {
   } finally {
     document.body.classList.remove("is-shell-loading");
     isShellNavigating = false;
+    if (pendingShellNav) {
+      const next = pendingShellNav;
+      pendingShellNav = null;
+      navigateShell(next.url, next.push, next.force);
+    }
   }
 }
 
