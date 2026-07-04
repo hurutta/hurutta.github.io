@@ -426,12 +426,12 @@ function initChatSection() {
     {
       question: "Summarize your work experience.",
       answer:
-        "To be filled soon ***.",
+        "4+ years at bKash — Software Engineer to Senior Engineer, Advanced Research. Shipped AVA (the in-app AI assistant), merchant backend microservices, and the QR engine behind Bangladesh's largest payment network.",
     },
     {
       question: "Key skills you bring?",
       answer:
-        "To be filled soon ***.",
+        "AI research to production: LLMs, NLP & deep learning (PyTorch, Transformers, LangChain) · backend at scale (Java, Python, Spring WebFlux, FastAPI) · k8s, AWS, Vertex AI.",
     },
   ];
 
