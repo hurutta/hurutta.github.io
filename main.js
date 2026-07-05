@@ -139,7 +139,7 @@ function buildRightPanel(page = "home") {
     <div class="project-embed medium-card">
       <h3>LinkedIn</h3>
       <div class="embed-wrapper medium">
-        <img src="https://media.licdn.com/dms/image/v2/D5622AQHEP94JPUaKqg/feedshare-shrink_800/B56Zh9OcFQHMAk-/0/1754447595046?e=1772668800&v=beta&t=7Kf-bO4H8GgiEeF8rFgVMhJ533GFyUfNIL8uweXF5mk" alt="LinkedIn post cover" />
+        <img src="assets/images/linkedin-cover.svg" alt="LinkedIn post cover" />
         <div>
           <p class="medium-title">Abid Jawad on LinkedIn</p>
           <a href="https://www.linkedin.com/feed/update/urn:li:share:7358686570813575172" target="_blank" rel="noreferrer">View on LinkedIn →</a>
