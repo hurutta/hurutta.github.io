@@ -42,7 +42,7 @@ Colombo | 6.9271, 79.8612 | Day 8 · Lotus Tower & departure
 
 ---
 
-## Day 1: Midnight Arrival and Into the Hills of Kandy | 12 October 2025
+## Day 1 @ Kandy: Midnight Arrival and Into the Hills of Kandy | 12 October 2025
 
 Our flight landed around 2:00 AM. After passing through security, we caught a bus to Colombo from the airport terminal, reaching the city by 4:00 AM. Without wasting a moment, we hopped onto a local bus to Kandy — surprisingly cheap and packed with locals. The overnight ride through the dark countryside had the adventure rolling well before sunrise.
 
@@ -57,7 +57,7 @@ We reached Kandy by 8:00 AM and didn't spare any time — just kept our bags at 
 
 ---
 
-## Day 2: One of the World's Most Beautiful Train Rides | 13 October 2025
+## Day 2 @ Ella: One of the World's Most Beautiful Train Rides | 13 October 2025
 
 We woke up very early, took a city walk, and went to the lakeside — about two hours of wandering before we reached the train station. Our train was at 9:00 AM and it was packed with people. We had bought the tickets a full month in advance, and securing them early was essential for the legendary blue train from **Kandy to Ella**. For the next several hours, tea estates, waterfalls, and tiny stations frozen in time drifted past our faces. We reached Ella by afternoon and got into the hotel — there was a bit of rain. In the evening we went out to eat, it was raining heavily, and after dinner we roamed around the town.
 
@@ -69,7 +69,7 @@ We woke up very early, took a city walk, and went to the lakeside — about two 
 
 ---
 
-## Day 3: Ella's Trails, Bridges, and Waterfalls | 14 October 2025
+## Day 3 @ Ella: Ella's Trails, Bridges, and Waterfalls | 14 October 2025
 
 We started very early morning and walked from town to **Little Adam's Peak**. Next was the walk through tea gardens to the **Nine Arch Bridge** — timing our visit with the mid-morning train felt like watching a live-action postcard. The afternoon was for chasing waterfalls: the dramatic **Ravana Falls** and the quieter **Kuda Ravana** tucked between caves. We wrapped the day with a slow wander through the tiny town center.
 
@@ -82,7 +82,7 @@ We started very early morning and walked from town to **Little Adam's Peak**. Ne
 
 ---
 
-## Day 4: Sun, Sand, and Sea in Mirissa | 15 October 2025
+## Day 4 @ Mirissa: Sun, Sand, and Sea in Mirissa | 15 October 2025
 
 Sunrise at **Coconut Tree Hill** gave us silhouettes of palms against the Indian Ocean — a must for drone shots. The afternoon was spent on **Mirissa Beach**, alternating between swimming and sipping king coconuts. A short hike rewarded us with **Secret Beach**, where the calm turquoise water was beautiful.
 
@@ -94,7 +94,7 @@ Sunrise at **Coconut Tree Hill** gave us silhouettes of palms against the Indian
 
 ---
 
-## Day 5: Beach Vibes in Ahangama | 16 October 2025
+## Day 5 @ Ahangama: Beach Vibes in Ahangama | 16 October 2025
 
 We shifted base to Ahangama for its surf-town vibe. Spent the day hopping between beaches — **Ahangama**, **Waligama**, and **Kabalana**. At Kabalana we sat and watched surfers riding the waves, pretty cool to see even from the shore. We also stopped to see the famous **stilt fishermen** doing their thing — the real deal, not a tourist show.
 
@@ -106,7 +106,7 @@ We shifted base to Ahangama for its surf-town vibe. Spent the day hopping betwee
 
 ---
 
-## Day 6: Beach Hopping Around Unawatuna | 17 October 2025
+## Day 6 @ Unawatuna: Beach Hopping Around Unawatuna | 17 October 2025
 
 We took it easy and spent the day exploring the beaches south of Galle. First stop was **Mihiripenna**, a quiet stretch of sand with barely any tourists. From there we walked along the coast to **Frog Rock** — a rock formation that actually looks like a frog if you squint. The main event was **Unawatuna Beach**, a wide golden crescent with mellow waves, perfect for swimming and doing absolutely nothing.
 
@@ -118,7 +118,7 @@ We took it easy and spent the day exploring the beaches south of Galle. First st
 
 ---
 
-## Day 7: A Step Back in Time at Galle Fort | 18 October 2025
+## Day 7 @ Galle: A Step Back in Time at Galle Fort | 18 October 2025
 
 **Galle Fort** felt like stepping into a living museum. We walked the ramparts from the lighthouse to the clocktower and browsed boutiques in the **Dutch Hospital** complex. Cobblestone streets, mustard-colored walls, and sea views made it easy to slow down and just wander.
 
@@ -129,7 +129,7 @@ We took it easy and spent the day exploring the beaches south of Galle. First st
 
 ---
 
-## Day 8: Farewell, Sri Lanka | 19 October 2025
+## Day 8 @ Colombo: Farewell, Sri Lanka | 19 October 2025
 
 For the final day we visited the **Lotus Tower** for panoramic views of the city, then headed to **Pettah Market** for a souvenir run and explored the **Pettah Floating Market**. We also peeked inside **Jami Ul-Alfar Mosque**. After stocking up on Ceylon tea and cinnamon, we headed to the airport with sand still between our toes.
 

@@ -62,6 +62,11 @@ html {
   scroll-behavior: smooth;
 }
 
+.cv-section,
+.md-day-heading {
+  scroll-margin-top: 1.25rem;
+}
+
 .background-grid {
   position: fixed;
   inset: 0;
@@ -3245,6 +3250,25 @@ body[data-page="post"] .content-map-links a {
     text-align: center;
     padding: 0.35rem 0.9rem;
     font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* Post pages force a vertical map for the desktop sidebar — inside the
+     fixed bottom dock that clips to nothing, so restore the horizontal
+     swipeable layout there too */
+  body[data-page="post"] .content-map {
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+  }
+
+  body[data-page="post"] .content-map-links {
+    flex-direction: row;
+    gap: 0.45rem;
+  }
+
+  body[data-page="post"] .content-map-links a {
+    text-align: center;
     white-space: nowrap;
   }
 

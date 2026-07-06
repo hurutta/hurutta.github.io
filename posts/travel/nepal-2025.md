@@ -41,7 +41,7 @@ Kathmandu | 27.7172, 85.3240 | Days 6–7 · Old city & departure
 
 ---
 
-## Day 1: Arrival and the Journey Begins | 3 January 2025
+## Day 1 @ Kathmandu: Arrival and the Journey Begins | 3 January 2025
 
 After landing at Tribhuvan International Airport (KTM) in Kathmandu, we hopped into our pre-booked jeep to begin the long trek toward Manang. The road to Manang is notoriously long, rough, and risky — narrow mountain paths with landslides and steep drop-offs on one side. So the plan was simple: push as far as we could on the first day. We made it as far as Mugling, arriving around 10:00 PM local time, where we stayed the night.
 
@@ -49,7 +49,7 @@ After landing at Tribhuvan International Airport (KTM) in Kathmandu, we hopped i
 
 ---
 
-## Day 2: Into the Mountains | 4 January 2025
+## Day 2 @ Manang: Into the Mountains | 4 January 2025
 
 We set off early the next morning, passing through Besisahar as we wound our way higher into the Himalayas. Along the way, we spotted several waterfalls cascading down the mountainside — the most striking ones being **Octopus Waterfall** and **Chamche Waterfall**. Our original plan was to stop at Pisang and stay the night there, but when we arrived we found that all the hotels were shut — winter had set in and everything was closed up. So we pushed further ahead. After a full day of driving through rugged terrain, we finally reached Humde, where we managed to find a place to stay. When we arrived, the temperature was already at **-8°C**, and by night it dropped to **-12°C** — absolutely freezing cold.
 
@@ -65,7 +65,7 @@ We set off early the next morning, passing through Besisahar as we wound our way
 
 ---
 
-## Day 3: Manang and the Lakes | 5 January 2025
+## Day 3 @ Manang: Manang and the Lakes | 5 January 2025
 
 Early the next morning, we completed the final leg to **Manang**. Our first stop was **Gangapurna Lake** — the lake was completely frozen, and we got up close to the massive Gangapurna glacier behind it. We spent the rest of the morning exploring the village and taking in the high-altitude scenery. By afternoon, we began our descent, stopping at the stunning **Green Lake** along the way. Our driver pushed through the night, driving the jeep back down the mountain trails.
 
@@ -81,7 +81,7 @@ Early the next morning, we completed the final leg to **Manang**. Our first stop
 
 ---
 
-## Day 4: Descent to Pokhara | 6 January 2025
+## Day 4 @ Pokhara: Descent to Pokhara | 6 January 2025
 
 Around 4:00 AM, we reached Besisahar and caught a few hours of much-needed sleep. Later that morning, we set off for **Pokhara**, arriving around noon. After checking in, we spent the afternoon at **Phewa Lake** and spent the rest of the night roaming through the vibrant streets of the lakeside town.
 
@@ -92,7 +92,7 @@ Around 4:00 AM, we reached Besisahar and caught a few hours of much-needed sleep
 
 ---
 
-## Day 5: Exploring Pokhara | 7 January 2025
+## Day 5 @ Pokhara: Exploring Pokhara | 7 January 2025
 
 We started the morning with a visit to the **World Peace** for a panoramic viewpoint of the city and the Annapurna range. We spent the rest of the day sightseeing around Pokhara before starting our return journey to Kathmandu at 8:00 PM.
 
@@ -103,7 +103,7 @@ We started the morning with a visit to the **World Peace** for a panoramic viewp
 
 ---
 
-## Day 6: Return to the Capital | 8 January 2025
+## Day 6 @ Kathmandu: Return to the Capital | 8 January 2025
 
 We pulled into Kathmandu at approximately 4:00 AM and headed straight to our hotel to rest. After waking up, we spent the day immersed in the local culture, visiting **Kathmandu Durbar Square**, the bustling markets of **Asan and Indra Chowk**, and the narrow streets of **Thamel**.
 
@@ -114,7 +114,7 @@ We pulled into Kathmandu at approximately 4:00 AM and headed straight to our hot
 
 ---
 
-## Day 7: Departure | 9 January 2025
+## Day 7 @ Kathmandu: Departure | 9 January 2025
 
 On our final morning, we headed back to the airport for our flight home, marking the end of an incredible journey.
 

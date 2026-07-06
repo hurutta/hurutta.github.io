@@ -1564,11 +1564,12 @@ function markdownToHtml(markdown) {
       const level = Math.min(6, headingMatch[1].length);
       // Day heading detection: ## Day N: Title
       if (level === 2) {
-        const dayMatch = headingMatch[2].match(/^Day\s+(\d+)\s*:\s*(.*?)(?:\s*\|\s*(.+))?$/);
+        const dayMatch = headingMatch[2].match(/^Day\s+(\d+)(?:\s*@\s*([^:]+?))?\s*:\s*(.*?)(?:\s*\|\s*(.+))?$/);
         if (dayMatch) {
-          const [, dayNum, dayTitle, dayDate] = dayMatch;
+          const [, dayNum, dayLoc, dayTitle, dayDate] = dayMatch;
           const dateHtml = dayDate ? `<span class="md-day-date">${dayDate.trim()}</span>` : "";
-          html += `<h2 class="md-day-heading" id="day-${dayNum}" data-day="${dayNum}"><span class="md-day-badge">Day ${dayNum}</span>${dateHtml}<span class="md-day-title">${inlineMarkdown(dayTitle)}</span></h2>`;
+          const locAttr = dayLoc ? ` data-loc="${dayLoc.trim()}"` : "";
+          html += `<h2 class="md-day-heading" id="day-${dayNum}" data-day="${dayNum}"${locAttr}><span class="md-day-badge">Day ${dayNum}</span>${dateHtml}<span class="md-day-title">${inlineMarkdown(dayTitle)}</span></h2>`;
           continue;
         }
       }
@@ -1610,11 +1611,8 @@ function buildPostContentMap() {
   if (!headings.length) return "";
   const links = Array.from(headings).map((h) => {
     const day = h.dataset.day;
-    const titleEl = h.querySelector(".md-day-title");
-    const label = titleEl ? titleEl.textContent.trim() : `Day ${day}`;
-    // Shorten long titles for the nav
-    const short = label.length > 28 ? label.slice(0, 26) + "…" : label;
-    return `<a href="#day-${day}">Day ${day}: ${short}</a>`;
+    const loc = h.dataset.loc;
+    return `<a href="#day-${day}">Day ${day}${loc ? `: ${loc}` : ""}</a>`;
   }).join("");
   return `
     <div class="content-map" aria-label="On this page">
@@ -1659,6 +1657,7 @@ hydrateShellContent();
 const shellSupportsSPA = "pushState" in window.history && typeof window.fetch === "function";
 let isShellNavigating = false;
 let pendingShellNav = null;
+let currentShellUrl = window.location.pathname + window.location.search;
 
 if (shellSupportsSPA) {
   initShellNavigation();
@@ -1666,11 +1665,29 @@ if (shellSupportsSPA) {
 
 function initShellNavigation() {
   document.addEventListener("click", handleShellLinkClick);
-  window.addEventListener("popstate", (event) => {
-    const target = event.state?.url || window.location.pathname + window.location.search;
+  // "On this page" anchors: scroll explicitly — native fragment navigation
+  // races the SPA router and silently fails on some browsers
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest(".content-map a[href^='#']");
+    if (!link) return;
+    event.preventDefault();
+    const id = link.getAttribute("href").slice(1);
+    const target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    window.history.replaceState(window.history.state, "", "#" + id);
+  });
+  window.addEventListener("popstate", () => {
+    const current = window.location.pathname + window.location.search;
+    // Hash-only traversal (e.g. "On this page" anchors) — the document is
+    // already rendered; let the browser handle the scroll natively.
+    if (current === currentShellUrl) return;
     // force: by the time popstate fires the browser has already updated the
     // location, so the same-URL guard in navigateShell would always bail.
-    navigateShell(target, false, true);
+    navigateShell(current, false, true);
   });
   window.history.replaceState({ url: window.location.pathname + window.location.search }, "", window.location.pathname + window.location.search);
 }
@@ -1723,6 +1740,7 @@ async function navigateShell(url, push = true, force = false) {
     document.body.dataset.page = nextPage;
     setActiveShellNav(nextPage);
     document.title = doc.title;
+    currentShellUrl = targetUrl.pathname + targetUrl.search;
     if (push) {
       const stateUrl = targetUrl.pathname + targetUrl.search;
       window.history.pushState({ url: stateUrl }, "", stateUrl);
