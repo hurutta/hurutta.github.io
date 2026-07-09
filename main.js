@@ -4,6 +4,17 @@ let currentLang = "en";
 let cachedViewCount = null;
 const root = document.documentElement;
 const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)");
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// Liquid Glass motion: re-run the materialize animation on freshly swapped
+// content — the glass "lenses in" instead of snapping into place.
+function lgMaterialize(el) {
+  if (!el || prefersReducedMotion.matches) return;
+  el.classList.remove("lg-materialize");
+  void el.offsetWidth;
+  el.classList.add("lg-materialize");
+  el.addEventListener("animationend", () => el.classList.remove("lg-materialize"), { once: true });
+}
 
 const socialSprites = {
   github: `
@@ -191,7 +202,7 @@ function refreshThemeToggleButtons() {
   themeToggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
-      applyTheme(nextTheme);
+      liquidThemeSwitch(nextTheme, button);
     });
   });
 }
@@ -224,6 +235,51 @@ function applyTheme(theme, persist = true) {
     localStorage.setItem(themeStorageKey, theme);
   }
   syncThemeButtons(theme);
+}
+
+// Theme switch as a liquid lens sweep: the new theme floods the page in a
+// circular wave radiating from the toggle, via the View Transitions API.
+// Engines without it (or with reduced motion) switch instantly, as before.
+let themeTransitionActive = false;
+function liquidThemeSwitch(theme, sourceEl) {
+  if (typeof document.startViewTransition !== "function" || prefersReducedMotion.matches) {
+    applyTheme(theme);
+    return;
+  }
+  // One sweep at a time: if a wipe is still playing, flip instantly rather
+  // than stacking a second transition (which snaps and reads as a double
+  // blink). The wipe is only 0.6s, so this is rarely hit.
+  if (themeTransitionActive) {
+    applyTheme(theme);
+    return;
+  }
+  const rect = sourceEl.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  const radius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  );
+  root.style.setProperty("--lg-wipe-x", `${x}px`);
+  root.style.setProperty("--lg-wipe-y", `${y}px`);
+  root.style.setProperty("--lg-wipe-r", `${Math.ceil(radius)}px`);
+  root.classList.add("lg-theme-wipe");
+  themeTransitionActive = true;
+  const transition = document.startViewTransition(() => applyTheme(theme));
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    root.classList.remove("lg-theme-wipe");
+    themeTransitionActive = false;
+  };
+  // Never abort mid-animation — that snap is the double-blink. Just clean up
+  // when the sweep finishes (or if the engine rejects, on the same promise).
+  transition.finished.then(cleanup, cleanup);
+  // Fallback only: if `finished` never settles (flaky engine), release the
+  // guard after the sweep would have ended. applyTheme already ran inside the
+  // callback, so this only tidies the class — it can't cause a visual jump.
+  setTimeout(cleanup, 900);
 }
 
 function syncThemeButtons(theme) {
@@ -606,6 +662,7 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    lgMaterialize(contentEl);
     injectPostContentMap();
     initJourneyMaps();
     currentLang = lang;
@@ -1772,4 +1829,160 @@ function swapMiddlePanel(nextPanel) {
   const current = document.querySelector(".middle-panel");
   if (!current) return;
   current.replaceWith(nextPanel);
+  lgMaterialize(nextPanel);
 }
+
+// --- Liquid Glass refraction lens -------------------------------------------
+// Genuine edge refraction for the floating glass elements: a per-element SVG
+// displacement map (convex squircle lens profile) warps the backdrop near the
+// edges, applied via backdrop-filter: url(#lg-lens-*). Only Chromium supports
+// SVG filters in backdrop-filter; other engines keep the CSS frosted material.
+(() => {
+  const LENS_SELECTORS = [".content-map", ".theme-toggle", ".lang-toggle"];
+  const isChromium = typeof window.chrome !== "undefined";
+  const reducedTransparency =
+    window.matchMedia && window.matchMedia("(prefers-reduced-transparency: reduce)").matches;
+  if (!isChromium || reducedTransparency || typeof document.createElementNS !== "function") return;
+
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let defsSvg = null;
+  let lensSeq = 0;
+  const lenses = []; // { el, filterEl, feImage, feMap, w, h }
+
+  function ensureDefs() {
+    if (defsSvg && defsSvg.isConnected) return defsSvg;
+    defsSvg = document.createElementNS(SVG_NS, "svg");
+    defsSvg.setAttribute("width", "0");
+    defsSvg.setAttribute("height", "0");
+    defsSvg.setAttribute("aria-hidden", "true");
+    defsSvg.style.cssText = "position:fixed;left:-9999px;top:0;pointer-events:none;";
+    document.body.appendChild(defsSvg);
+    return defsSvg;
+  }
+
+  // Signed distance to a rounded-rect boundary; negative inside.
+  function roundedRectSDF(x, y, w, h, r) {
+    const qx = Math.abs(x - w / 2) - (w / 2 - r);
+    const qy = Math.abs(y - h / 2) - (h / 2 - r);
+    const ax = Math.max(qx, 0);
+    const ay = Math.max(qy, 0);
+    return Math.hypot(ax, ay) + Math.min(Math.max(qx, qy), 0) - r;
+  }
+
+  // Displacement map: R = x-offset, G = y-offset, 128 = neutral. Pixels within
+  // the bezel sample the backdrop outward along the surface normal, strongest
+  // at the edge — light bending through the curved rim of the glass.
+  function buildDisplacementMap(w, h, radius, bezel) {
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    const img = ctx.createImageData(w, h);
+    const data = img.data;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const px = x + 0.5;
+        const py = y + 0.5;
+        const d = roundedRectSDF(px, py, w, h, radius);
+        let r = 128;
+        let g = 128;
+        if (d < 0 && d > -bezel) {
+          const t = -d / bezel; // 0 at the edge → 1 at the bezel's inner limit
+          // convex squircle profile: displacement peaks at the rim, melts inward
+          const m = Math.pow(1 - t, 2.2);
+          const gx =
+            roundedRectSDF(px + 1, py, w, h, radius) - roundedRectSDF(px - 1, py, w, h, radius);
+          const gy =
+            roundedRectSDF(px, py + 1, w, h, radius) - roundedRectSDF(px, py - 1, w, h, radius);
+          const len = Math.hypot(gx, gy) || 1;
+          r = Math.round(128 + (gx / len) * m * 127);
+          g = Math.round(128 + (gy / len) * m * 127);
+        }
+        const i = (y * w + x) * 4;
+        data[i] = r;
+        data[i + 1] = g;
+        data[i + 2] = 128;
+        data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return canvas.toDataURL();
+  }
+
+  function elementRadius(el, w, h) {
+    const raw = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 20;
+    return Math.min(raw, w / 2, h / 2);
+  }
+
+  function refreshLens(entry) {
+    const rect = entry.el.getBoundingClientRect();
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height);
+    if (w < 24 || h < 24) return;
+    if (Math.abs(w - entry.w) < 2 && Math.abs(h - entry.h) < 2) return;
+    entry.w = w;
+    entry.h = h;
+    const radius = elementRadius(entry.el, w, h);
+    const bezel = Math.max(8, Math.min(22, Math.round(Math.min(w, h) * 0.28)));
+    entry.feImage.setAttribute("href", buildDisplacementMap(w, h, radius, bezel));
+    entry.feImage.setAttribute("width", w);
+    entry.feImage.setAttribute("height", h);
+    entry.feMap.setAttribute("scale", Math.min(30, Math.round(bezel * 1.4)));
+    entry.el.style.backdropFilter = `url(#${entry.filterEl.id}) blur(14px) saturate(1.75)`;
+  }
+
+  const sizeObserver = new ResizeObserver((entries) => {
+    for (const resized of entries) {
+      const entry = lenses.find((l) => l.el === resized.target);
+      if (entry) refreshLens(entry);
+    }
+  });
+
+  function attachLens(el) {
+    if (lenses.some((l) => l.el === el)) return;
+    const svg = ensureDefs();
+    const filterEl = document.createElementNS(SVG_NS, "filter");
+    filterEl.id = `lg-lens-${++lensSeq}`;
+    filterEl.setAttribute("x", "0");
+    filterEl.setAttribute("y", "0");
+    filterEl.setAttribute("width", "100%");
+    filterEl.setAttribute("height", "100%");
+    filterEl.setAttribute("color-interpolation-filters", "sRGB");
+    const feImage = document.createElementNS(SVG_NS, "feImage");
+    feImage.setAttribute("x", "0");
+    feImage.setAttribute("y", "0");
+    feImage.setAttribute("preserveAspectRatio", "none");
+    feImage.setAttribute("result", "lg_map");
+    const feMap = document.createElementNS(SVG_NS, "feDisplacementMap");
+    feMap.setAttribute("in", "SourceGraphic");
+    feMap.setAttribute("in2", "lg_map");
+    feMap.setAttribute("xChannelSelector", "R");
+    feMap.setAttribute("yChannelSelector", "G");
+    filterEl.appendChild(feImage);
+    filterEl.appendChild(feMap);
+    svg.appendChild(filterEl);
+    const entry = { el, filterEl, feImage, feMap, w: 0, h: 0 };
+    lenses.push(entry);
+    sizeObserver.observe(el);
+    refreshLens(entry);
+  }
+
+  function scanLenses() {
+    for (let i = lenses.length - 1; i >= 0; i--) {
+      if (!lenses[i].el.isConnected) {
+        sizeObserver.unobserve(lenses[i].el);
+        lenses[i].filterEl.remove();
+        lenses.splice(i, 1);
+      }
+    }
+    document.querySelectorAll(LENS_SELECTORS.join(",")).forEach(attachLens);
+  }
+
+  let scanTimer = null;
+  const domObserver = new MutationObserver(() => {
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(scanLenses, 150);
+  });
+  domObserver.observe(document.body, { childList: true, subtree: true });
+  scanLenses();
+})();

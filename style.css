@@ -1,16 +1,23 @@
 :root {
   --bg: #05060a;
   --body-gradient: radial-gradient(circle at top, #10122b, #03040b 65%);
-  --panel: rgba(10, 12, 20, 0.75);
-  --panel-solid: #0f111a;
+  --panel: rgba(16, 20, 33, 0.5);
+  --panel-solid: rgba(13, 16, 27, 0.55);
   --text: #f4f5f7;
   --muted: #9ca3af;
   --accent: #82ffda;
   --accent-2: #4c6fff;
-  --border: rgba(255, 255, 255, 0.08);
-  --nav-surface: #0c0f18;
-  --tile-surface: #080a12;
-  --card-surface: #0b0e18;
+  --border: rgba(255, 255, 255, 0.14);
+  --nav-surface: rgba(255, 255, 255, 0.055);
+  --tile-surface: rgba(255, 255, 255, 0.045);
+  --card-surface: rgba(255, 255, 255, 0.05);
+  /* Liquid Glass material */
+  --glass-blur: 26px;
+  --glass-saturate: 170%;
+  --glass-rim-hi: rgba(255, 255, 255, 0.28);
+  --glass-rim-lo: rgba(255, 255, 255, 0.05);
+  --glass-drop: 0 24px 60px -24px rgba(2, 4, 10, 0.7);
+  --surface-opaque: #10131f;
   --grid-line: rgba(255, 255, 255, 0.18);
   --glow-1: rgba(130, 255, 218, 0.24);
   --glow-2: rgba(76, 111, 255, 0.3);
@@ -23,16 +30,22 @@
 :root[data-theme="light"] {
   --bg: #f7f8fb;
   --body-gradient: radial-gradient(circle at top, #ffffff, #dfe6ff 70%);
-  --panel: rgba(255, 255, 255, 0.92);
-  --panel-solid: #ffffff;
+  --panel: rgba(255, 255, 255, 0.42);
+  --panel-solid: rgba(255, 255, 255, 0.5);
   --text: #0f172a;
   --muted: #52607a;
   --accent: #2563eb;
   --accent-2: #7c3aed;
-  --border: rgba(15, 23, 42, 0.12);
-  --nav-surface: #eef1fb;
-  --tile-surface: #f6f7ff;
-  --card-surface: #eff2fb;
+  --border: rgba(148, 160, 195, 0.4);
+  --nav-surface: rgba(255, 255, 255, 0.5);
+  --tile-surface: rgba(255, 255, 255, 0.42);
+  --card-surface: rgba(255, 255, 255, 0.46);
+  --glass-blur: 26px;
+  --glass-saturate: 180%;
+  --glass-rim-hi: rgba(255, 255, 255, 0.95);
+  --glass-rim-lo: rgba(255, 255, 255, 0.35);
+  --glass-drop: 0 18px 50px -20px rgba(50, 62, 120, 0.35);
+  --surface-opaque: #ffffff;
   --grid-line: rgba(15, 23, 42, 0.14);
   --glow-1: rgba(13, 148, 136, 0.3);
   --glow-2: rgba(37, 99, 235, 0.3);
@@ -3333,5 +3346,398 @@ body[data-page="post"] .content-map-links a {
 
   .theme-toggle {
     align-self: auto;
+  }
+}
+
+/* ========================================================================
+   LIQUID GLASS (Apple, WWDC 2025)
+   The material = adaptive translucent tint + backdrop blur with high
+   saturation (vibrancy) + specular rim light + soft elevation shadow.
+   True edge refraction (lensing) is layered on top by main.js, which
+   builds per-element feDisplacementMap filters and applies them via
+   backdrop-filter: url(#lg-lens-*) on engines that support it.
+   ======================================================================== */
+
+/* ---- Glass sheets: the three shell panels (desktop). On mobile the
+        panels stay dissolved and .cv-section cards are the glass units. */
+@media (min-width: 641px) {
+  .left-panel,
+  .middle-panel,
+  .right-panel {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border-color: var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      var(--glass-drop);
+  }
+
+  /* CV cards become clear glass tinted by the accents, not painted slabs */
+  .cv-section,
+  .cv-section:nth-child(even) {
+    background-color: var(--card-surface);
+    background-image: linear-gradient(135deg, rgba(130, 255, 218, 0.05), rgba(76, 111, 255, 0.05));
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      0 20px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .cv-section:hover {
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      0 25px 45px rgba(0, 0, 0, 0.3);
+  }
+
+  :root[data-theme="light"] .cv-section,
+  :root[data-theme="light"] .cv-section:nth-child(even) {
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      0 16px 36px rgba(50, 62, 120, 0.16);
+  }
+
+  /* Experience timeline shells: glass instead of near-black paint */
+  .cv-timeline article {
+    background: var(--tile-surface);
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo);
+  }
+}
+
+/* ---- Floating toolbar / dock: the clearest liquid glass element ------- */
+.content-map {
+  background: rgba(14, 18, 30, 0.52);
+  -webkit-backdrop-filter: blur(22px) saturate(var(--glass-saturate));
+  backdrop-filter: blur(22px) saturate(var(--glass-saturate));
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    inset 0 -1px 0 var(--glass-rim-lo),
+    0 18px 45px -18px rgba(2, 4, 10, 0.75);
+}
+
+:root[data-theme="light"] .content-map {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    inset 0 -1px 0 var(--glass-rim-lo),
+    0 18px 45px -18px rgba(50, 62, 120, 0.4);
+}
+
+.content-map-links a {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .content-map-links a {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: var(--border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 8px -2px rgba(50, 62, 120, 0.2);
+}
+
+/* ---- Controls & cards: thin glass with a specular top rim -------------- */
+.nav-button,
+.theme-toggle,
+.lang-toggle,
+.blog-stat,
+.folder-list button,
+.file-list button,
+.browser-panel,
+.article-preview,
+.projects article,
+.project-stats,
+.project-embed {
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    inset 0 -1px 0 var(--glass-rim-lo);
+}
+
+.browser-panel {
+  background: var(--tile-surface);
+}
+
+:root[data-theme="light"] .browser-panel {
+  background: var(--tile-surface);
+  border-color: var(--border);
+}
+
+:root[data-theme="light"] .article-preview {
+  background: var(--tile-surface);
+  border-color: var(--border);
+}
+
+:root[data-theme="light"] .projects article {
+  background: var(--card-surface);
+  border-color: var(--border);
+}
+
+.credential-card {
+  background: var(--card-surface);
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    inset 0 -1px 0 var(--glass-rim-lo);
+}
+
+.credential-card:hover {
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    inset 0 -1px 0 var(--glass-rim-lo),
+    0 10px 35px rgba(6, 10, 20, 0.45);
+}
+
+:root[data-theme="light"] .credential-card {
+  background: var(--card-surface);
+  border-color: var(--border);
+}
+
+:root[data-theme="light"] .credential-card:hover {
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    inset 0 -1px 0 var(--glass-rim-lo),
+    0 10px 30px rgba(15, 23, 42, 0.15);
+}
+
+/* ---- Gel response: glass squishes under the finger --------------------- */
+.nav-button:active,
+.theme-toggle:active,
+.folder-list button:active,
+.file-list button:active,
+.content-map-links a:active,
+.blog-stat:active {
+  transform: scale(0.96);
+  transition-duration: 0.1s;
+}
+
+.nav-button,
+.content-map-links a {
+  transition-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.nav-button:hover,
+.nav-button:focus-visible {
+  background: color-mix(in srgb, var(--nav-surface) 55%, rgba(255, 255, 255, 0.14));
+}
+
+/* ---- Map popups & controls float over imagery: keep them solid --------- */
+.journey-stop-tip,
+.journey-map .leaflet-popup-content-wrapper,
+.journey-map .leaflet-popup-tip,
+.journey-map .leaflet-bar a,
+.journey-map-btn {
+  background: var(--surface-opaque);
+}
+
+.journey-stop-tip::before {
+  border-top-color: var(--surface-opaque);
+}
+
+/* ---- Mobile: the cards ARE the glass — they ride the raw backdrop ------ */
+@media (max-width: 640px) {
+  .cv-section {
+    -webkit-backdrop-filter: blur(18px) saturate(var(--glass-saturate));
+    backdrop-filter: blur(18px) saturate(var(--glass-saturate));
+    background-color: var(--panel);
+    background-image: linear-gradient(135deg, rgba(130, 255, 218, 0.05), rgba(76, 111, 255, 0.05));
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      0 12px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  :root[data-theme="light"] .cv-section {
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      0 12px 28px rgba(50, 62, 120, 0.18);
+  }
+
+  .nav-button,
+  .theme-toggle,
+  .lang-toggle,
+  .browser-panel,
+  .projects article,
+  .project-stats,
+  .project-embed {
+    -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    background: var(--panel);
+  }
+
+  /* Bottom dock: full liquid glass pill over scrolling content */
+  .content-map {
+    background: rgba(12, 16, 28, 0.55);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim-hi),
+      inset 0 -1px 0 var(--glass-rim-lo),
+      0 12px 35px rgba(0, 0, 0, 0.55);
+  }
+
+  :root[data-theme="light"] .content-map {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* ---- Accessibility: honor reduced transparency ------------------------- */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --panel: #0f111a;
+    --panel-solid: #0f111a;
+    --nav-surface: #0c0f18;
+    --tile-surface: #080a12;
+    --card-surface: #0b0e18;
+  }
+
+  :root[data-theme="light"] {
+    --panel: #ffffff;
+    --panel-solid: #ffffff;
+    --nav-surface: #eef1fb;
+    --tile-surface: #f6f7ff;
+    --card-surface: #eff2fb;
+  }
+
+  .left-panel,
+  .middle-panel,
+  .right-panel,
+  .content-map,
+  .cv-section,
+  .nav-button,
+  .theme-toggle,
+  .lang-toggle,
+  .browser-panel,
+  .projects article,
+  .project-stats,
+  .project-embed {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* ---- Liquid motion: everything switches like fluid glass ---------------- */
+:root {
+  --glass-ease: cubic-bezier(0.32, 0.72, 0, 1);      /* Apple sheet curve   */
+  --glass-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* gel overshoot       */
+}
+
+/* Fresh content lenses in: rises, sharpens, and settles like poured glass */
+@keyframes lg-materialize {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.lg-materialize {
+  animation: lg-materialize 0.5s var(--glass-ease);
+}
+
+/* Blog browser stages (categories → posts → preview) melt in on switch */
+.browser-panel:not([hidden]) {
+  animation: lg-materialize 0.45s var(--glass-ease);
+}
+
+/* Springy, gel-like state changes on the controls */
+.toggle-thumb {
+  transition: transform 0.5s var(--glass-spring);
+}
+
+.lang-thumb {
+  transition: transform 0.5s var(--glass-spring);
+}
+
+.nav-button {
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.45s var(--glass-spring);
+}
+
+.content-map-links a {
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.45s var(--glass-spring);
+}
+
+.credential-card {
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.35s ease,
+    transform 0.45s var(--glass-spring);
+}
+
+.cv-section {
+  transition:
+    transform 0.5s var(--glass-spring),
+    box-shadow 0.5s ease;
+}
+
+.theme-toggle {
+  transition:
+    border-color 0.3s ease,
+    transform 0.45s var(--glass-spring);
+}
+
+.folder-list button,
+.file-list button {
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.45s var(--glass-spring);
+}
+
+/* ---- Theme switch: a lens wave floods the page from the toggle ---------- */
+/* The old theme stays fully painted underneath; the new theme is clipped by
+   an expanding circle on top. Pinning the old snapshot opaque (killing the
+   default cross-fade) is what stops the mid-wipe flash / double blink. */
+:root.lg-theme-wipe::view-transition-old(root) {
+  animation: none;
+  opacity: 1;
+  mix-blend-mode: normal;
+  z-index: 1;
+}
+
+:root.lg-theme-wipe::view-transition-new(root) {
+  animation: lg-theme-wipe 0.6s var(--glass-ease);
+  mix-blend-mode: normal;
+  z-index: 2;
+}
+
+@keyframes lg-theme-wipe {
+  from {
+    clip-path: circle(0px at var(--lg-wipe-x, 50%) var(--lg-wipe-y, 50%));
+  }
+  to {
+    clip-path: circle(var(--lg-wipe-r, 150%) at var(--lg-wipe-x, 50%) var(--lg-wipe-y, 50%));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-materialize,
+  .browser-panel:not([hidden]) {
+    animation: none;
+  }
+
+  :root.lg-theme-wipe::view-transition-new(root) {
+    animation: none;
   }
 }
