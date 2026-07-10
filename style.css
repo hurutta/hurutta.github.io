@@ -335,11 +335,23 @@ nav {
   width: calc(100% - 12px);
   height: 26px;
   border-radius: 13px;
-  background: rgba(130, 255, 218, 0.18);
-  border: 1px solid rgba(130, 255, 218, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.07));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1),
+    0 3px 10px rgba(0, 0, 0, 0.35);
   top: 4px;
-  transform: translateY(var(--toggle-thumb-offset, 0));
-  transition: transform 0.2s ease;
+  translate: 0 var(--toggle-thumb-offset, 0);
+  transition: translate 0.2s ease;
+}
+
+:root[data-theme="light"] .toggle-thumb {
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.3),
+    0 3px 10px rgba(50, 62, 120, 0.3);
 }
 
 .sr-only {
@@ -546,13 +558,22 @@ h2 {
 
 .folder-list button:hover,
 .file-list button:hover {
-  border-color: var(--accent-2);
-  transform: translateX(4px);
+  border-style: solid;
+  border-color: rgba(130, 255, 218, 0.45);
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--tile-surface) 68%, rgba(130, 255, 218, 0.14));
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    0 12px 30px -14px rgba(6, 10, 20, 0.65);
 }
 
 :root[data-theme="light"] .folder-list button:hover,
 :root[data-theme="light"] .file-list button:hover {
-  border-color: rgba(37, 99, 235, 0.6);
+  border-color: rgba(37, 99, 235, 0.5);
+  background: color-mix(in srgb, #ffffff 80%, rgba(37, 99, 235, 0.12));
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim-hi),
+    0 12px 28px -14px rgba(50, 62, 120, 0.3);
 }
 
 .article-preview {
@@ -657,11 +678,15 @@ h2 {
   bottom: 4px;
   left: 4px;
   width: calc(50% - 4px);
-  background: rgba(130, 255, 218, 0.18);
-  border: 1px solid rgba(130, 255, 218, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.07));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1),
+    0 3px 10px rgba(0, 0, 0, 0.35);
   border-radius: 999px;
-  transform: translateX(calc(var(--lang-thumb-offset, 0) * 100%));
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  translate: calc(var(--lang-thumb-offset, 0) * 100%) 0;
+  transition: translate 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
 }
 
@@ -675,8 +700,11 @@ h2 {
 }
 
 :root[data-theme="light"] .lang-thumb {
-  background: rgba(37, 99, 235, 0.12);
-  border-color: rgba(37, 99, 235, 0.5);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.3),
+    0 3px 10px rgba(50, 62, 120, 0.3);
 }
 
 .post-panel[data-lang-active="bn"] {
@@ -3649,18 +3677,84 @@ body[data-page="post"] .content-map-links a {
   animation: lg-materialize 0.5s var(--glass-ease);
 }
 
-/* Blog browser stages (categories → posts → preview) melt in on switch */
-.browser-panel:not([hidden]) {
+/* Blog browser stages (categories → posts → preview): the panel flows in
+   from the travel direction, and its contents pour in like liquid filling
+   the glass top-to-bottom. */
+.browser-panel:not([hidden])[data-flow="forward"] {
+  animation: lg-flow-right 0.5s var(--glass-ease);
+}
+
+.browser-panel:not([hidden])[data-flow="back"] {
+  animation: lg-flow-left 0.5s var(--glass-ease);
+}
+
+/* fallback for the very first paint, before any direction is set */
+.browser-panel:not([hidden]):not([data-flow]) {
   animation: lg-materialize 0.45s var(--glass-ease);
+}
+
+@keyframes lg-flow-right {
+  from {
+    opacity: 0;
+    transform: translateX(26px) scale(0.985);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes lg-flow-left {
+  from {
+    opacity: 0;
+    transform: translateX(-26px) scale(0.985);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* The pour: each row falls into place a beat after the one above it */
+.browser-panel:not([hidden]) .folder-list li,
+.browser-panel:not([hidden]) .file-list li {
+  animation: lg-pour 0.5s var(--glass-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms + 90ms);
+}
+
+/* Preview stage has no list — cascade its heading/meta/body/link instead */
+.browser-panel:not([hidden]) .article-preview > * {
+  animation: lg-pour 0.5s var(--glass-ease) backwards;
+}
+.browser-panel:not([hidden]) .article-preview > *:nth-child(1) { animation-delay: 0.10s; }
+.browser-panel:not([hidden]) .article-preview > *:nth-child(2) { animation-delay: 0.17s; }
+.browser-panel:not([hidden]) .article-preview > *:nth-child(3) { animation-delay: 0.24s; }
+.browser-panel:not([hidden]) .article-preview > *:nth-child(4) { animation-delay: 0.31s; }
+
+@keyframes lg-pour {
+  from {
+    opacity: 0;
+    transform: translateY(-9px) scale(0.97);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
 }
 
 /* Springy, gel-like state changes on the controls */
 .toggle-thumb {
-  transition: transform 0.5s var(--glass-spring);
+  transition: translate 0.5s var(--glass-spring);
 }
 
 .lang-thumb {
-  transition: transform 0.5s var(--glass-spring);
+  transition: translate 0.5s var(--glass-spring);
 }
 
 .nav-button {
@@ -3739,5 +3833,80 @@ body[data-page="post"] .content-map-links a {
 
   :root.lg-theme-wipe::view-transition-new(root) {
     animation: none;
+  }
+}
+
+/* ========================================================================
+   LIQUID DROPLET THUMBS — the glass indicator IS the water drop
+   The thumb is a clear glass lens (refraction supplied by main.js where
+   supported). In motion it behaves like a droplet: it elongates along the
+   travel axis as it tears away, overshoots into a squash on arrival, and
+   relaxes back — surface tension, not a slide.
+   Travel uses the `translate` property, the stretch animates `scale`, so
+   the two compose instead of fighting over `transform`.
+   ======================================================================== */
+@keyframes lg-drop-y {
+  0% {
+    scale: 1 1;
+  }
+  30% {
+    scale: 0.82 1.32;
+  }
+  65% {
+    scale: 1.1 0.86;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+
+@keyframes lg-drop-x {
+  0% {
+    scale: 1 1;
+  }
+  30% {
+    scale: 1.32 0.82;
+  }
+  65% {
+    scale: 0.86 1.1;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+
+.toggle-thumb.lg-drop-y {
+  animation: lg-drop-y 0.55s var(--glass-ease);
+}
+
+.lang-thumb.lg-drop-x {
+  animation: lg-drop-x 0.5s var(--glass-ease);
+}
+
+/* pressing the toggle: the droplet swells under the finger before release */
+.theme-toggle:active .toggle-thumb {
+  scale: 1.08;
+}
+
+.lang-toggle:active .lang-thumb {
+  scale: 1.06;
+}
+
+.toggle-thumb,
+.lang-thumb {
+  transition-property: translate, scale;
+  transition-duration: 0.5s, 0.25s;
+  transition-timing-function: var(--glass-spring), var(--glass-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle-thumb.lg-drop-y,
+  .lang-thumb.lg-drop-x {
+    animation: none;
+  }
+
+  .toggle-thumb,
+  .lang-thumb {
+    transition: none;
   }
 }

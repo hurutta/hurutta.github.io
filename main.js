@@ -16,6 +16,19 @@ function lgMaterialize(el) {
   el.addEventListener("animationend", () => el.classList.remove("lg-materialize"), { once: true });
 }
 
+// Droplet travel: the glass thumb behaves like a water drop in motion —
+// it elongates along the travel axis as it tears away, then squashes and
+// settles on arrival. Runs as a `scale` animation so it composes with the
+// spring-eased `translate` doing the actual travel.
+function lgDropletTravel(thumb, axis) {
+  if (!thumb || prefersReducedMotion.matches) return;
+  const cls = axis === "x" ? "lg-drop-x" : "lg-drop-y";
+  thumb.classList.remove("lg-drop-x", "lg-drop-y");
+  void thumb.offsetWidth;
+  thumb.classList.add(cls);
+  thumb.addEventListener("animationend", () => thumb.classList.remove(cls), { once: true });
+}
+
 const socialSprites = {
   github: `
     <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
@@ -202,6 +215,7 @@ function refreshThemeToggleButtons() {
   themeToggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
+      lgDropletTravel(button.querySelector(".toggle-thumb"), "y");
       liquidThemeSwitch(nextTheme, button);
     });
   });
@@ -375,17 +389,28 @@ function initBlogBrowser() {
   let activeCategory = null;
   let activePost = null;
 
+  // Liquid navigation: deeper stages flow in from the right, going back flows
+  // from the left — the direction is read by CSS to pick the flow keyframe.
+  const stageOrder = { categories: 0, posts: 1, preview: 2 };
+  let currentStage = "categories";
+
   const goToStage = (stage) => {
-    if (categoryPanel) categoryPanel.hidden = stage !== "categories";
-    if (postsPanel) postsPanel.hidden = stage !== "posts";
-    if (previewPanel) previewPanel.hidden = stage !== "preview";
+    const flow = stageOrder[stage] >= stageOrder[currentStage] ? "forward" : "back";
+    currentStage = stage;
+    [categoryPanel, postsPanel, previewPanel].forEach((panel) => {
+      if (!panel) return;
+      const active = panel.dataset.stage === stage;
+      panel.hidden = !active;
+      if (active) panel.dataset.flow = flow;
+    });
   };
 
   const renderCategories = () => {
     categoryList.innerHTML = "";
 
-    blogData.forEach((category) => {
+    blogData.forEach((category, i) => {
       const li = document.createElement("li");
+      li.style.setProperty("--i", i);
       const button = document.createElement("button");
       button.type = "button";
       button.classList.toggle("active", category.id === activeCategory);
@@ -416,8 +441,9 @@ function initBlogBrowser() {
 
     if (categoryLabel) categoryLabel.textContent = category.name;
 
-    category.posts.forEach((post) => {
+    category.posts.forEach((post, i) => {
       const li = document.createElement("li");
+      li.style.setProperty("--i", i);
       const button = document.createElement("button");
       button.type = "button";
       button.classList.toggle("active", post.slug === activePost);
@@ -676,6 +702,7 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
         btn.classList.toggle("active", isActive);
         btn.setAttribute("aria-checked", isActive);
       });
+      lgDropletTravel(toggle.querySelector(".lang-thumb"), "x");
       toggle.style.setProperty("--lang-thumb-offset", lang === "bn" ? "1" : "0");
     }
 
@@ -1838,7 +1865,7 @@ function swapMiddlePanel(nextPanel) {
 // edges, applied via backdrop-filter: url(#lg-lens-*). Only Chromium supports
 // SVG filters in backdrop-filter; other engines keep the CSS frosted material.
 (() => {
-  const LENS_SELECTORS = [".content-map", ".theme-toggle", ".lang-toggle"];
+  const LENS_SELECTORS = [".content-map", ".theme-toggle", ".lang-toggle", ".toggle-thumb", ".lang-thumb"];
   const isChromium = typeof window.chrome !== "undefined";
   const reducedTransparency =
     window.matchMedia && window.matchMedia("(prefers-reduced-transparency: reduce)").matches;
@@ -1928,7 +1955,12 @@ function swapMiddlePanel(nextPanel) {
     entry.feImage.setAttribute("width", w);
     entry.feImage.setAttribute("height", h);
     entry.feMap.setAttribute("scale", Math.min(30, Math.round(bezel * 1.4)));
-    entry.el.style.backdropFilter = `url(#${entry.filterEl.id}) blur(14px) saturate(1.75)`;
+    // Small droplets (toggle thumbs) are clear lenses: the content beneath
+    // must refract through them, not frost over. Big sheets keep heavy blur.
+    const isDroplet = Math.min(w, h) < 44;
+    entry.el.style.backdropFilter = isDroplet
+      ? `url(#${entry.filterEl.id}) blur(1.5px) saturate(1.5) brightness(1.12)`
+      : `url(#${entry.filterEl.id}) blur(14px) saturate(1.75)`;
   }
 
   const sizeObserver = new ResizeObserver((entries) => {
