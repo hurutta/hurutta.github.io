@@ -3910,3 +3910,264 @@ body[data-page="post"] .content-map-links a {
     transition: none;
   }
 }
+
+/* ---- Code blocks (tech posts): glass terminal panes -------------------- */
+.md-code {
+  margin: 22px 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(40, 42, 54, 0.88);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 30px -14px rgba(2, 4, 10, 0.6);
+}
+
+:root[data-theme="light"] .md-code {
+  background: #282a36;
+  border-color: rgba(15, 23, 42, 0.35);
+}
+
+.md-code figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.md-code-lang {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(130, 255, 218, 0.75);
+}
+
+.md-code-copy {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8eaf0;
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.3s var(--glass-spring);
+}
+
+.md-code-copy:hover {
+  border-color: rgba(130, 255, 218, 0.5);
+  background: rgba(130, 255, 218, 0.12);
+}
+
+.md-code-copy:active {
+  transform: scale(0.94);
+}
+
+.md-code pre {
+  margin: 0;
+  padding: 0.95rem 1.1rem;
+  overflow-x: auto;
+}
+
+.md-code code {
+  font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #f8f8f2;
+  white-space: pre;
+  background: transparent;
+}
+
+/* Dracula token palette (highlight.js classes) */
+.md-code .hljs {
+  background: transparent;
+  color: #f8f8f2;
+}
+
+.md-code .hljs-comment,
+.md-code .hljs-quote {
+  color: #6272a4;
+  font-style: italic;
+}
+
+.md-code .hljs-keyword,
+.md-code .hljs-selector-tag,
+.md-code .hljs-tag,
+.md-code .hljs-operator {
+  color: #ff79c6;
+}
+
+.md-code .hljs-string,
+.md-code .hljs-regexp,
+.md-code .hljs-addition {
+  color: #f1fa8c;
+}
+
+.md-code .hljs-number,
+.md-code .hljs-literal,
+.md-code .hljs-symbol,
+.md-code .hljs-bullet,
+.md-code .hljs-link {
+  color: #bd93f9;
+}
+
+.md-code .hljs-title,
+.md-code .hljs-title.function_,
+.md-code .hljs-function .hljs-title,
+.md-code .hljs-section,
+.md-code .hljs-meta {
+  color: #50fa7b;
+}
+
+.md-code .hljs-built_in,
+.md-code .hljs-type,
+.md-code .hljs-class .hljs-title,
+.md-code .hljs-title.class_,
+.md-code .hljs-attr,
+.md-code .hljs-attribute,
+.md-code .hljs-selector-class,
+.md-code .hljs-selector-attr,
+.md-code .hljs-selector-pseudo {
+  color: #8be9fd;
+  font-style: italic;
+}
+
+.md-code .hljs-params,
+.md-code .hljs-template-variable,
+.md-code .hljs-variable {
+  color: #ffb86c;
+}
+
+.md-code .hljs-name,
+.md-code .hljs-deletion {
+  color: #ff5555;
+}
+
+.md-code .hljs-emphasis {
+  font-style: italic;
+}
+
+.md-code .hljs-strong {
+  font-weight: 700;
+}
+
+/* ---- Medium card: branded invite to the original story ----------------- */
+.medium-cta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 30px 0 8px;
+  padding: 1.05rem 1.25rem;
+  border-radius: 18px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 14px 40px -16px rgba(0, 0, 0, 0.7);
+  transition: transform 0.45s var(--glass-spring), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.medium-cta:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 20px 50px -18px rgba(0, 0, 0, 0.8);
+}
+
+.medium-cta:active {
+  transform: scale(0.985);
+}
+
+.medium-logo {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.medium-logo svg {
+  width: 32px;
+  height: 19px;
+  display: block;
+}
+
+.medium-cta {
+  flex-wrap: wrap;
+}
+
+.medium-cta-text {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.medium-cta-text strong {
+  font-size: 0.98rem;
+  color: #ffffff;
+}
+
+.medium-cta-text small {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.medium-cta-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #000000;
+  white-space: nowrap;
+}
+
+:root[data-theme="light"] .medium-cta {
+  border-color: rgba(0, 0, 0, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 36px -16px rgba(15, 23, 42, 0.5);
+}
+
+@media (max-width: 640px) {
+  .medium-cta {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .medium-cta-btn {
+    margin-left: calc(52px + 0.75rem);
+  }
+}
+
+/* Fenced code lives on the dark Dracula pane in BOTH themes — keep the
+   post-card inline-code chip styling (light bg in light mode) away from it */
+.post-card .md-code code,
+:root[data-theme="light"] .post-card .md-code code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: #f8f8f2;
+}
+
+/* Medium CTA sits on its black brand card in both themes — the light-theme
+   .post-card strong accent color must not repaint it */
+:root[data-theme="light"] .post-card .medium-cta-text strong {
+  color: #ffffff;
+  text-shadow: none;
+}

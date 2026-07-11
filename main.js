@@ -320,12 +320,12 @@ const blogData = [
     description: "Systems, DX, architecture notes",
     posts: [
       {
-        slug: "shipping-edge-functions",
-        title: "Shipping edge functions without fear",
-        date: "May 02, ****",
-        readingTime: "7 min read",
+        slug: "convert-old-pc-to-web-server",
+        title: "Convert your old desktop/laptop to a Web Server",
+        date: "Jul 03, 2024",
+        readingTime: "6 min read",
         summary:
-          "To be filled soon ***",
+          "Skip the credit-card hosting tiers — repurpose that dusty machine with an HTTP tunnel. From a local Flask app to a public URL with Ngrok, browser-warning workarounds, and free static domains.",
       },
     ],
   },
@@ -640,6 +640,8 @@ async function hydratePostPage() {
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    appendMediumCard(contentEl, frontmatter.medium);
+    highlightCodeBlocks();
     injectPostContentMap();
     initJourneyMaps();
     fetchViewCount();
@@ -688,6 +690,8 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    appendMediumCard(contentEl, frontmatter.medium);
+    highlightCodeBlocks();
     lgMaterialize(contentEl);
     injectPostContentMap();
     initJourneyMaps();
@@ -714,6 +718,58 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
   } catch (_) {
     // Silently fail — keep current language
   }
+}
+
+// Syntax highlighting for fenced code blocks — highlight.js, lazy-loaded from
+// CDN only when a rendered post actually contains code. Token colors are the
+// Dracula palette, defined in style.css. Fails soft: if the CDN is
+// unreachable, code simply stays monochrome.
+let hljsLoader = null;
+function highlightCodeBlocks() {
+  if (!document.querySelector(".md-code pre code")) return;
+  const run = () => {
+    if (!window.hljs) return;
+    document.querySelectorAll(".md-code pre code:not(.hljs)").forEach((el) => {
+      window.hljs.highlightElement(el);
+    });
+  };
+  if (window.hljs) {
+    run();
+    return;
+  }
+  if (!hljsLoader) {
+    hljsLoader = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js";
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
+    });
+  }
+  hljsLoader.then(run);
+}
+
+// Posts with a `medium:` frontmatter URL get a branded card at the end of the
+// article inviting readers to the original story on Medium.
+function appendMediumCard(contentEl, mediumUrl) {
+  if (!mediumUrl || !/^https:\/\/medium\.com\//.test(mediumUrl)) return;
+  contentEl.insertAdjacentHTML(
+    "beforeend",
+    `<a class="medium-cta" href="${mediumUrl}" target="_blank" rel="noreferrer">
+      <span class="medium-logo" aria-hidden="true">
+        <svg viewBox="0 0 1043.63 592.71" fill="currentColor" role="img"><g>
+          <ellipse cx="296.35" cy="296.35" rx="296.35" ry="296.35"></ellipse>
+          <ellipse cx="767.84" cy="296.35" rx="141.72" ry="277.29"></ellipse>
+          <ellipse cx="1001.61" cy="296.35" rx="42.02" ry="249.57"></ellipse>
+        </g></svg>
+      </span>
+      <span class="medium-cta-text">
+        <strong>Originally published on Medium</strong>
+        <small>Enjoyed this? Read the original story, leave some claps, and follow me there.</small>
+      </span>
+      <span class="medium-cta-btn">Read on Medium →</span>
+    </a>`
+  );
 }
 
 function populatePostFrontmatter(meta, titleEl, metaEl, categoryEl) {
@@ -1550,6 +1606,32 @@ function markdownToHtml(markdown) {
       continue;
     }
 
+    // Fenced code blocks: ```lang ... ``` (journey fences handled below)
+    const fenceMatch = trimmed.match(/^```(\w*)$/);
+    if (fenceMatch && trimmed !== "```journey") {
+      flushParagraph();
+      closeList();
+      flushImages();
+      const lang = fenceMatch[1] || "code";
+      const codeLines = [];
+      while (i + 1 < lines.length && lines[i + 1].trim() !== "```") {
+        i += 1;
+        codeLines.push(lines[i]);
+      }
+      if (i + 1 < lines.length) i += 1; // consume closing fence
+      const escaped = codeLines
+        .join("\n")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      const langClass = fenceMatch[1] ? ` class="language-${fenceMatch[1]}"` : "";
+      html +=
+        `<figure class="md-code"><figcaption><span class="md-code-lang">${lang}</span>` +
+        `<button type="button" class="md-code-copy" onclick="navigator.clipboard.writeText(this.closest('.md-code').querySelector('code').innerText);this.textContent='Copied ✓';setTimeout(()=>{this.textContent='Copy'},1400)">Copy</button>` +
+        `</figcaption><pre><code${langClass}>${escaped}</code></pre></figure>`;
+      continue;
+    }
+
     // Journey map block: ```journey ... ``` with one "Name | lat, lng | note"
     // per line, plus an optional "route: <geometry file>" line pointing at
     // precomputed road/sea geometry in assets/routes/.
@@ -1685,6 +1767,7 @@ function markdownToHtml(markdown) {
 
 function inlineMarkdown(text) {
   return text
+    .replace(/(?<!!)\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, "<code>$1</code>");
