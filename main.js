@@ -190,6 +190,91 @@ function renderPartials() {
   });
   renderRightPanels();
   decorateSocialLinks();
+  initSiteFooter();
+}
+
+// --- Site footer ------------------------------------------------------------
+function initSiteFooter() {
+  if (document.querySelector(".site-footer")) return;
+  const shell = document.querySelector("main.shell");
+  if (!shell) return;
+  const footer = document.createElement("footer");
+  footer.className = "site-footer";
+  footer.innerHTML = `
+    <span class="footer-item">© ${new Date().getFullYear()} Abid Mohammad Jawad</span>
+    <span class="footer-sep" aria-hidden="true">·</span>
+    <span class="footer-item">Server time <time id="footerClock" title="Asia/Dhaka (UTC+6)"></time> <abbr class="footer-tz" title="Asia/Dhaka">UTC+6</abbr></span>
+    <span class="footer-sep footer-deploy-sep" aria-hidden="true" hidden>·</span>
+    <span class="footer-item footer-deploy" hidden>Last updated <time id="footerDeploy"></time> <a class="footer-build" id="footerBuild" target="_blank" rel="noreferrer" title="Deployed commit"></a></span>
+  `;
+  shell.insertAdjacentElement("afterend", footer);
+  startFooterClock();
+  loadFooterDeployTime();
+}
+
+function startFooterClock() {
+  const clock = document.getElementById("footerClock");
+  if (!clock) return;
+  const format = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Dhaka",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const tick = () => {
+    clock.textContent = format.format(new Date());
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+function loadFooterDeployTime() {
+  const target = document.getElementById("footerDeploy");
+  if (!target) return;
+  const show = ({ iso, sha }) => {
+    const when = new Date(iso);
+    if (Number.isNaN(when.getTime())) return;
+    target.dateTime = iso;
+    target.textContent = new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(when);
+    if (sha) {
+      const build = document.getElementById("footerBuild");
+      build.textContent = sha.slice(0, 7);
+      build.href = `https://github.com/hurutta/hurutta.github.io/commit/${sha}`;
+    }
+    document.querySelector(".footer-deploy").hidden = false;
+    document.querySelector(".footer-deploy-sep").hidden = false;
+  };
+  // The newest commit on main is what GitHub Pages deploys, so its date is
+  // the site's last-updated time and its short hash is the live "version".
+  // Cached per session to spare the API quota.
+  let cached = null;
+  try {
+    cached = JSON.parse(sessionStorage.getItem("site-deploy-info"));
+  } catch (_) {
+    /* stale/invalid cache — refetch below */
+  }
+  if (cached?.iso) {
+    show(cached);
+    return;
+  }
+  fetch("https://api.github.com/repos/hurutta/hurutta.github.io/commits?per_page=1")
+    .then((res) => (res.ok ? res.json() : Promise.reject(new Error(res.status))))
+    .then((commits) => {
+      const iso = commits?.[0]?.commit?.committer?.date;
+      const sha = commits?.[0]?.sha;
+      if (!iso) return;
+      const info = { iso, sha };
+      sessionStorage.setItem("site-deploy-info", JSON.stringify(info));
+      show(info);
+    })
+    .catch(() => {
+      /* offline or rate-limited — footer simply omits the line */
+    });
 }
 
 function renderRightPanels(pageOverride) {
