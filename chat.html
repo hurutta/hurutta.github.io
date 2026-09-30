@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abid Jawad · TinyJawad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="chat">
+    <div class="background-grid"></div>
+    <main class="shell">
+      <aside class="left-panel" data-partial="left" data-page="chat"></aside>
+
+      <section class="middle-panel">
+        <div class="panel" id="chat">
+          <p class="eyebrow">TinyJawad</p>
+          <h2>Ask me about my work.</h2>
+          <p class="lede">
+            A small language model with my professional profile built in, running
+            entirely in your browser on your own CPU/GPU. Nothing you type leaves
+            your machine.
+          </p>
+
+          <section class="cv-section tiny-chat-section" id="tinychat">
+            <div class="tiny-chat-status" id="tinyChatStatus">
+              <div class="tiny-status-line">
+                <span class="tiny-status-text" id="tinyStatusText">Preparing…</span>
+                <span class="tiny-status-badge" id="tinyDeviceBadge" hidden></span>
+              </div>
+              <div class="tiny-progress" id="tinyProgress">
+                <div class="tiny-progress-fill" id="tinyProgressFill"></div>
+              </div>
+            </div>
+
+            <div class="chat-window tiny-chat-window" id="tinyChatWindow" aria-live="polite"></div>
+
+            <form class="tiny-chat-form" id="tinyChatForm" autocomplete="off">
+              <input
+                type="text"
+                id="tinyChatInput"
+                placeholder="Ask about my work, education, projects…"
+                maxlength="200"
+                disabled
+              />
+              <button type="submit" id="tinyChatSend" disabled>Send</button>
+            </form>
+            <p class="tiny-chat-disclaimer">
+              A small on-device model with my professional profile. Answers about
+              my work are exact; general answers are best-effort. For anything
+              important, email me directly.
+            </p>
+          </section>
+        </div>
+      </section>
+
+      <section class="right-panel" data-partial="right" data-page="chat"></section>
+    </main>
+    <script src="main.js"></script>
+    <script data-goatcounter="https://hurutta.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
+  </body>
+</html>

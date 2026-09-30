@@ -71,6 +71,12 @@ const navItems = [
     subtitle: "Tech & Travel",
     href: "blog.html",
   },
+  {
+    id: "chat",
+    label: "TinyJawad",
+    subtitle: "On-device chat",
+    href: "chat.html",
+  },
 ];
 
 const homeContentSections = [
@@ -2112,8 +2118,250 @@ function hydrateShellContent() {
   initBlogBrowser();
   initChatSection();
   initAsciiPortrait();
+  initTinyChat();
   hydratePostPage();
   renderRightPanels(document.body.dataset.page || "home");
+}
+
+// --- TinyJawad on-device chat ------------------------------------------------
+// Minimal, safe markdown for finished answers: HTML is escaped first, then
+// fenced code, inline code, bold, italics, bullet and numbered lists and
+// paragraphs are rebuilt. Streaming text stays plain until the answer is
+// complete, so half-open fences never render as garbage.
+function renderChatMarkdown(text) {
+  const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const blocks = [];
+  let src = text.replace(/```(\w+)?\n?([\s\S]*?)(?:```|$)/g, (_, lang, code) => {
+    blocks.push(`<pre><code${lang ? ` data-lang="${esc(lang)}"` : ""}>${esc(code.replace(/\n$/, ""))}</code></pre>`);
+    return `\u0000${blocks.length - 1}\u0000`;
+  });
+  const inline = (t) =>
+    esc(t)
+      .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[\s(])\*(\S(?:[^*\n]*?\S)?)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>");
+  const lines = src.split("\n");
+  const out = [];
+  let list = null; // { tag, items }
+  let para = [];
+  const flushPara = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
+  const flushList = () => { if (list) { out.push(`<${list.tag}>${list.items.map((i) => `<li>${inline(i)}</li>`).join("")}</${list.tag}>`); list = null; } };
+  for (const raw of lines) {
+    const line = raw.trim();
+    const block = line.match(/^\u0000(\d+)\u0000$/);
+    if (block) { flushPara(); flushList(); out.push(blocks[Number(block[1])]); continue; }
+    const ol = line.match(/^(\d+)[.)]\s+(.*)$/);
+    const ul = line.match(/^[-*•]\s+(.*)$/);
+    if (ol || ul) {
+      flushPara();
+      const tag = ol ? "ol" : "ul";
+      if (!list || list.tag !== tag) { flushList(); list = { tag, items: [] }; }
+      list.items.push(ol ? ol[2] : ul[1]);
+      continue;
+    }
+    if (!line) { flushPara(); flushList(); continue; }
+    flushList();
+    para.push(line);
+  }
+  flushPara(); flushList();
+  // inline numbered steps the model writes on one line: "1. Foo 2. Bar 3. Baz"
+  const html = out.join("");
+  return html.replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[Number(i)]);
+}
+const chatMarkdownIsRich = (html) => /<(pre|ol|ul|strong|em|code)\b/.test(html) || (html.match(/<p>/g) || []).length > 1;
+
+let tinyChatWorker = null;
+
+function initTinyChat() {
+  const windowEl = document.getElementById("tinyChatWindow");
+  if (!windowEl || windowEl.dataset.ready) return;
+  windowEl.dataset.ready = "1";
+
+  const statusText = document.getElementById("tinyStatusText");
+  const deviceBadge = document.getElementById("tinyDeviceBadge");
+  const progress = document.getElementById("tinyProgress");
+  const progressFill = document.getElementById("tinyProgressFill");
+  const form = document.getElementById("tinyChatForm");
+  const input = document.getElementById("tinyChatInput");
+  const send = document.getElementById("tinyChatSend");
+
+  const history = [];
+  let streamBubble = null;
+  let streamTarget = null; // inner span once a retry has split the bubble
+
+  // Stick to the bottom while content grows — tokens, the final markdown
+  // render, the fade-in transform — unless the visitor has scrolled up to
+  // read something earlier. A MutationObserver catches every change, and
+  // the scroll runs after layout so the measurement is never stale.
+  let stickToBottom = true;
+  const nearBottom = () => windowEl.scrollHeight - windowEl.scrollTop - windowEl.clientHeight < 48;
+  windowEl.addEventListener("scroll", () => { stickToBottom = nearBottom(); }, { passive: true });
+  const pinToBottom = (force = false) => {
+    if (force) stickToBottom = true;
+    if (!stickToBottom) return;
+    requestAnimationFrame(() => { windowEl.scrollTop = windowEl.scrollHeight; });
+  };
+  new MutationObserver(() => pinToBottom()).observe(windowEl, { childList: true, subtree: true, characterData: true });
+  // the fade-in animation shifts the last bubble by a few pixels as it ends
+  windowEl.addEventListener("animationend", () => pinToBottom(), true);
+
+  const addBubble = (type, text) => {
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${type}`;
+    bubble.textContent = text;
+    windowEl.appendChild(bubble);
+    pinToBottom(true); // a new message always brings the view back down
+    return bubble;
+  };
+
+  let generating = false;
+  const setBusy = (on) => {
+    generating = on;
+    input.disabled = on;
+    // While generating, the button stays live and becomes Stop.
+    send.disabled = false;
+    send.textContent = on ? "Stop" : "Send";
+    send.classList.toggle("is-stop", on);
+    if (!on) input.focus();
+  };
+
+  const requestStop = () => {
+    if (generating) tinyChatWorker.postMessage({ type: "stop" });
+  };
+
+  if (!("Worker" in window)) {
+    statusText.textContent = "This browser can't run the model (no worker support).";
+    return;
+  }
+
+  // Cache-busting timestamp: browsers cache worker scripts aggressively and
+  // a stale worker silently serves old behavior even through hard refreshes.
+  // A unique URL per page load guarantees the current worker always runs
+  // (the heavy model files inside it keep their own long-lived HTTP cache).
+  tinyChatWorker = new Worker(`chat-worker.js?t=${Date.now()}`, { type: "module" });
+  statusText.textContent = "Downloading model (one-time, ~96 MB)…";
+
+  let modelReady = false;
+  // Monotonic phase machine: percent only rises, and once the "preparing"
+  // phase starts it never falls back to "downloading" — stray or duplicate
+  // progress events can't make the status flicker.
+  let maxPct = 0;
+  let preparing = false;
+  tinyChatWorker.onmessage = (event) => {
+    const msg = event.data;
+    if (msg.type === "progress" && msg.total && !modelReady && !preparing) {
+      const pct = Math.min(100, Math.round((msg.loaded / msg.total) * 100));
+      if (pct <= maxPct && pct < 100) return;
+      maxPct = Math.max(maxPct, pct);
+      progressFill.style.width = `${maxPct}%`;
+      if (maxPct >= 100) {
+        // Download done, but session compilation + router load still run —
+        // switch to an indeterminate bar so the UI never looks frozen.
+        preparing = true;
+        statusText.textContent = "Preparing the model (one-time setup)…";
+        progressFill.style.width = ""; // let the sweep animation's width rule
+        progress.classList.add("indeterminate");
+      } else {
+        statusText.textContent = `Downloading model (one-time, ~96 MB)… ${maxPct}%`;
+      }
+    } else if (msg.type === "ready") {
+      modelReady = true;
+      progress.hidden = true;
+      progress.classList.remove("indeterminate");
+      statusText.textContent = "Running locally on";
+      deviceBadge.textContent =
+        (msg.device === "webgpu" ? "WebGPU" : "CPU · WASM") +
+        (msg.build ? ` · ${msg.build}` : "");
+      deviceBadge.hidden = false;
+      setBusy(false);
+      addBubble(
+        "answer",
+        "Hello. I'm Jawad's portfolio assistant, a small model running on your machine. Ask me about his work, education or projects."
+      );
+    } else if (msg.type === "token") {
+      if (streamBubble) {
+        streamBubble.classList.remove("pending");
+        (streamTarget || streamBubble).textContent = msg.text;
+        pinToBottom();
+      }
+    } else if (msg.type === "restart") {
+      // The guard cut the first draft. Keep it visible but struck through,
+      // say so, and stream the second attempt underneath — never overwrite.
+      if (streamBubble) {
+        streamBubble.classList.remove("pending");
+        const draft = document.createElement("s");
+        draft.className = "chat-draft";
+        draft.textContent = (streamTarget || streamBubble).textContent || msg.draft || "";
+        const note = document.createElement("span");
+        note.className = "chat-restart-note";
+        note.textContent = "Discarded: that draft was inaccurate. Revised answer:";
+        streamTarget = document.createElement("span");
+        streamTarget.className = "chat-retry";
+        streamBubble.classList.add("has-retry");
+        streamBubble.replaceChildren(draft, note, streamTarget);
+        pinToBottom();
+      }
+    } else if (msg.type === "done") {
+      if (streamBubble) {
+        streamBubble.classList.remove("pending");
+        const target = streamTarget || streamBubble;
+        const html = renderChatMarkdown(msg.text);
+        if (chatMarkdownIsRich(html)) {
+          target.innerHTML = html;
+          streamBubble.classList.add("rich");
+        } else {
+          target.textContent = msg.text;
+        }
+        streamBubble.classList.remove("streaming");
+        streamBubble = null;
+        streamTarget = null;
+        pinToBottom();
+      }
+      if (history.length) history[history.length - 1].a = msg.text;
+      while (history.length > 3) history.shift();
+      setBusy(false);
+    } else if (msg.type === "error") {
+      statusText.textContent = `Model error: ${msg.message}`;
+      if (streamBubble) {
+        streamBubble.remove();
+        streamBubble = null;
+      }
+      setBusy(false);
+    }
+  };
+
+  tinyChatWorker.onerror = () => {
+    statusText.textContent = "Couldn't start the model worker.";
+  };
+
+  tinyChatWorker.postMessage({ type: "load" });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (generating) {
+      requestStop();
+      return;
+    }
+    const q = input.value.trim();
+    if (!q || input.disabled) return;
+    input.value = "";
+    addBubble("question", q);
+    history.push({ q, a: null });
+    streamBubble = addBubble("answer streaming pending", "");
+    // Three pulsing dots until the first token; the token handler swaps
+    // them for text so nothing is ever overwritten mid-read.
+    const dots = document.createElement("span");
+    dots.className = "typing-indicator";
+    dots.setAttribute("aria-label", "thinking");
+    dots.append(...[0, 1, 2].map(() => document.createElement("span")));
+    streamBubble.replaceChildren(dots);
+    setBusy(true);
+    tinyChatWorker.postMessage({ type: "generate", history: [...history] });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") requestStop();
+  });
 }
 
 hydrateShellContent();
