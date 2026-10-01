@@ -2239,7 +2239,44 @@ function initTinyChat() {
   // A unique URL per page load guarantees the current worker always runs
   // (the heavy model files inside it keep their own long-lived HTTP cache).
   tinyChatWorker = new Worker(`chat-worker.js?t=${Date.now()}`, { type: "module" });
-  statusText.textContent = "Downloading model (one-time, ~96 MB)…";
+  statusText.textContent = "Loading…";
+
+  // Phones and low-memory devices get router-only by default: the 84 MB
+  // language model crashed mobile tabs, and it is optional for every answer
+  // about the profile. Desktop downloads it automatically.
+  // Any one signal is enough: client-hint mobile flag, a mobile user agent,
+  // or a touch device with a phone-sized screen (iPadOS reports a desktop UA).
+  const isMobile =
+    navigator.userAgentData?.mobile === true ||
+    /Android|iPhone|iPad|iPod|Mobile|Silk|Opera Mini/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 820);
+  const lowMemory = typeof navigator.deviceMemory === "number" && navigator.deviceMemory <= 4;
+  const autoLLM = !(isMobile || lowMemory);
+  const loadModelBtn = document.getElementById("tinyLoadModel");
+  let llmReady = false;
+  let llmRequested = autoLLM;
+  const LLM_STATUS = "Downloading general-chat model (one-time, 84 MB)…";
+  const startLLMDownload = () => {
+    if (llmReady || llmRequested) return;
+    llmRequested = true;
+    if (loadModelBtn) loadModelBtn.hidden = true;
+    progress.hidden = false;
+    statusText.textContent = LLM_STATUS;
+    tinyChatWorker.postMessage({ type: "load-llm" });
+  };
+  if (loadModelBtn) loadModelBtn.addEventListener("click", () => { llmRequested = false; startLLMDownload(); });
+  if (isMobile) {
+    input.placeholder = "Ask about my work…";
+    // Phones open on the header; bring the chat into view once it is ready,
+    // unless the visitor has already started scrolling.
+    let userScrolled = false;
+    window.addEventListener("scroll", () => { if (window.scrollY > 40) userScrolled = true; }, { passive: true, once: true });
+    window.__tinyScrollToChat = () => {
+      if (userScrolled) return;
+      const section = document.getElementById("tinychat");
+      if (section) section.scrollIntoView({ behavior: prefersReducedMotion.matches ? "auto" : "smooth", block: "start" });
+    };
+  }
 
   let modelReady = false;
   // Monotonic phase machine: percent only rises, and once the "preparing"
@@ -2249,7 +2286,7 @@ function initTinyChat() {
   let preparing = false;
   tinyChatWorker.onmessage = (event) => {
     const msg = event.data;
-    if (msg.type === "progress" && msg.total && !modelReady && !preparing) {
+    if (msg.type === "progress" && msg.total && !llmReady && !preparing) {
       const pct = Math.min(100, Math.round((msg.loaded / msg.total) * 100));
       if (pct <= maxPct && pct < 100) return;
       maxPct = Math.max(maxPct, pct);
@@ -2262,22 +2299,43 @@ function initTinyChat() {
         progressFill.style.width = ""; // let the sweep animation's width rule
         progress.classList.add("indeterminate");
       } else {
-        statusText.textContent = `Downloading model (one-time, ~96 MB)… ${maxPct}%`;
+        statusText.textContent = `${LLM_STATUS} ${maxPct}%`;
       }
     } else if (msg.type === "ready") {
+      // Stage 1: router loaded — profile answers work now.
       modelReady = true;
-      progress.hidden = true;
+      progress.hidden = !autoLLM;
       progress.classList.remove("indeterminate");
-      statusText.textContent = "Running locally on";
-      deviceBadge.textContent =
-        (msg.device === "webgpu" ? "WebGPU" : "CPU · WASM") +
-        (msg.build ? ` · ${msg.build}` : "");
+      deviceBadge.textContent = `profile answers · ${msg.build || ""}`.trim();
       deviceBadge.hidden = false;
       setBusy(false);
       addBubble(
         "answer",
-        "Hello. I'm Jawad's portfolio assistant, a small model running on your machine. Ask me about his work, education or projects."
+        "Hello. I'm Jawad's portfolio assistant, running on your machine. Ask me about his work, education or projects."
       );
+      if (autoLLM) {
+        statusText.textContent = LLM_STATUS;
+      } else {
+        statusText.textContent = "Ready — profile answers run on your device.";
+        if (loadModelBtn) loadModelBtn.hidden = false;
+      }
+      if (window.__tinyScrollToChat) setTimeout(window.__tinyScrollToChat, 150);
+    } else if (msg.type === "llm-ready") {
+      // Stage 2: language model loaded — general questions work too.
+      llmReady = true;
+      progress.hidden = true;
+      progress.classList.remove("indeterminate");
+      if (loadModelBtn) loadModelBtn.hidden = true;
+      statusText.textContent = "Running locally on";
+      deviceBadge.textContent =
+        (msg.device === "webgpu" ? "WebGPU" : "CPU · WASM") +
+        (msg.build ? ` · ${msg.build}` : "");
+    } else if (msg.type === "needs-llm") {
+      if (loadModelBtn && !loadModelBtn.hidden) {
+        loadModelBtn.classList.remove("attention");
+        void loadModelBtn.offsetWidth; // restart the animation
+        loadModelBtn.classList.add("attention");
+      }
     } else if (msg.type === "token") {
       if (streamBubble) {
         streamBubble.classList.remove("pending");
@@ -2334,7 +2392,7 @@ function initTinyChat() {
     statusText.textContent = "Couldn't start the model worker.";
   };
 
-  tinyChatWorker.postMessage({ type: "load" });
+  tinyChatWorker.postMessage({ type: "load", llm: autoLLM });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
