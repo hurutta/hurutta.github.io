@@ -5349,3 +5349,129 @@ body[data-page="post"] .content-map-links a {
   }
   body[data-page="chat"] .tiny-side-rule { display: none; }
 }
+
+/* ==== Post images: reserved space, blur-up, shimmer, fade-in ============
+   The frame reserves the image's aspect ratio from the manifest and paints
+   the 24px preview (--lqip) blurred underneath; a light sweep runs across it
+   until the real file arrives and fades in. Hover/shadow move from the img
+   to the frame so the clipped corners stay clean. ========================= */
+.md-image-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 50%;
+  width: 100%;
+  vertical-align: top;
+  border-radius: 16px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--tile-surface);
+  border: 1px solid rgba(130, 255, 218, 0.2);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(130, 255, 218, 0.08);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+}
+.md-image-frame:hover {
+  transform: scale(1.02) translateY(-4px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(130, 255, 218, 0.15);
+}
+/* without manifest data the frame has no ratio: give it a soft minimum */
+.md-image-frame:not([style*="aspect-ratio"]).is-loading { min-height: 240px; }
+.md-image-frame::before {
+  /* blurred preview */
+  content: "";
+  position: absolute;
+  inset: -8%;
+  z-index: 1;
+  background-image: var(--lqip, none);
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px) saturate(1.15);
+  transform: scale(1.05);
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+.md-image-frame::after {
+  /* shimmer sweep */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 50%, transparent 80%);
+  background-size: 250% 100%;
+  animation: md-shimmer 1.6s ease-in-out infinite;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+@keyframes md-shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+.md-image-frame .md-img {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 0.55s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.md-image-frame .md-img:hover { transform: scale(1.04); box-shadow: none; }
+.md-image-frame.is-loaded .md-img { opacity: 1; transform: none; }
+.md-image-frame.is-loaded .md-img:hover { transform: none; }
+.md-image-frame.is-loaded::before,
+.md-image-frame.is-loaded::after,
+.md-image-frame.is-error::after { opacity: 0; animation: none; }
+.md-image-frame.is-error { min-height: 160px; background: var(--tile-surface); }
+.md-image-frame.is-error::before { opacity: 0.25; filter: blur(24px) grayscale(1); }
+.md-image-frame.is-error .md-img { opacity: 0; }
+.md-image-frame.is-error::after {
+  content: "Image unavailable";
+  opacity: 1;
+  background: none;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+/* grid: fixed-height tiles, cover-cropped, as before */
+.md-image-grid .md-image-frame {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+  height: 360px;
+  aspect-ratio: auto !important;
+  border-radius: 14px;
+}
+.md-image-grid .md-image-frame .md-img { height: 100%; object-fit: cover; }
+.md-image-grid .md-image[data-more] .md-image-frame { pointer-events: none; }
+@media (max-width: 640px) {
+  .md-image-frame { max-width: 100%; }
+}
+:root[data-theme="light"] .md-image-frame {
+  border-color: rgba(37, 99, 235, 0.15);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(37, 99, 235, 0.08);
+}
+:root[data-theme="light"] .md-image-frame:hover {
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(37, 99, 235, 0.15);
+}
+:root[data-theme="light"] .md-image-frame::after {
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.55) 50%, transparent 80%);
+  background-size: 250% 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-image-frame::after { animation: none; }
+  .md-image-frame .md-img { transform: none; transition: opacity 0.3s ease; }
+}

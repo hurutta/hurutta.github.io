@@ -744,12 +744,13 @@ async function hydratePostPage() {
   if (staleToggle) staleToggle.remove();
 
   try {
-    const response = await fetch(`posts/${slug}.md`);
+    const [response] = await Promise.all([fetch(`posts/${slug}.md`), loadImageManifest()]);
     if (!response.ok) throw new Error("Post not found");
     const text = await response.text();
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    enhancePostImages(contentEl);
     appendMediumCard(contentEl, frontmatter.medium);
     highlightCodeBlocks();
     injectPostContentMap();
@@ -800,6 +801,7 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    enhancePostImages(contentEl);
     appendMediumCard(contentEl, frontmatter.medium);
     highlightCodeBlocks();
     lgMaterialize(contentEl);
@@ -1618,6 +1620,51 @@ function parseFrontMatter(source) {
   return { frontmatter: {}, body: source };
 }
 
+// Image manifest: dimensions and a blurred 24px preview per post image,
+// built by tools/build_image_manifest.py. Lets each figure reserve its
+// exact aspect ratio and blur-up while the full file (≈ 0.8 MB each) loads.
+let imageManifest = null;
+let imageManifestPromise = null;
+function loadImageManifest() {
+  if (imageManifest) return Promise.resolve(imageManifest);
+  if (!imageManifestPromise) {
+    imageManifestPromise = fetch("assets/images/manifest.json")
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}))
+      .then((m) => { imageManifest = m; return m; });
+  }
+  return imageManifestPromise;
+}
+
+function imageFigureHtml({ src, alt, caption }, cls = "md-image", extraAttr = "") {
+  const meta = (imageManifest && imageManifest[src]) || null;
+  const ratio = meta ? ` style="aspect-ratio: ${meta.w} / ${meta.h}; --lqip: url('${meta.lqip}')"` : "";
+  const dims = meta ? ` width="${meta.w}" height="${meta.h}"` : "";
+  let html = `<figure class="${cls}"${extraAttr}>`;
+  html += `<span class="md-image-frame is-loading"${ratio}>`;
+  html += `<img class="md-img" src="${src}" alt="${alt}"${dims} loading="lazy" decoding="async" />`;
+  html += `</span>`;
+  if (caption) html += `<figcaption>${caption}</figcaption>`;
+  html += "</figure>";
+  return html;
+}
+
+// After the HTML is in the DOM: swap the placeholder out as each image
+// arrives (or fails). Cached images are already complete when we get here.
+function enhancePostImages(root) {
+  root.querySelectorAll(".md-image-frame .md-img").forEach((img) => {
+    const frame = img.closest(".md-image-frame");
+    const done = (ok) => {
+      frame.classList.remove("is-loading");
+      frame.classList.add(ok ? "is-loaded" : "is-error");
+    };
+    if (img.complete && img.naturalWidth > 0) { done(true); return; }
+    if (img.complete && img.naturalWidth === 0 && img.src) { done(false); return; }
+    img.addEventListener("load", () => done(true), { once: true });
+    img.addEventListener("error", () => done(false), { once: true });
+  });
+}
+
 function markdownToHtml(markdown) {
   const lines = markdown.split(/\r?\n/);
   let html = "";
@@ -1628,10 +1675,7 @@ function markdownToHtml(markdown) {
   const flushImages = () => {
     if (!imageBuffer.length) return;
     if (imageBuffer.length === 1) {
-      const { alt, src, caption } = imageBuffer[0];
-      html += `<figure class="md-image"><img src="${src}" alt="${alt}" loading="lazy" />`;
-      if (caption) html += `<figcaption>${caption}</figcaption>`;
-      html += "</figure>";
+      html += imageFigureHtml(imageBuffer[0]);
     } else {
       const extraCount = imageBuffer.length > 3 ? imageBuffer.length - 3 : 0;
       html += `<div class="md-image-grid">`;
@@ -1640,9 +1684,7 @@ function markdownToHtml(markdown) {
         const isLastVisible = i === 2 && extraCount > 0;
         const cls = isExtra ? "md-image md-image-extra" : "md-image";
         const moreAttr = isLastVisible ? ` data-more="${extraCount}" onclick="this.closest('.md-image-grid').classList.add('expanded')"` : "";
-        html += `<figure class="${cls}"${moreAttr}><img src="${src}" alt="${alt}" loading="lazy" />`;
-        if (caption) html += `<figcaption>${caption}</figcaption>`;
-        html += "</figure>";
+        html += imageFigureHtml({ alt, src, caption }, cls, moreAttr);
       });
       html += `</div>`;
     }
