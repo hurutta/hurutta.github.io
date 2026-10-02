@@ -1060,14 +1060,15 @@ function loadLeaflet() {
   return leafletLoader;
 }
 
-// Basemaps (free, no API key). Default is a satellite hybrid — Esri World
-// Imagery with a CARTO place-label overlay — with a per-map toggle to a
-// street style (CARTO Voyager / Dark Matter, following the site theme).
+// Basemaps (free, no API key). Satellite is a hybrid: Esri World Imagery
+// with Esri's place-label overlay. CARTO was used for the labels until it
+// began requiring an API key and watermarking keyless tiles ("API KEY
+// REQUIRED"); Esri's reference layers stay keyless. Streets come from Stadia.
 const JOURNEY_BASEMAPS = {
   satellite: {
     layers: () => [
       ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", "Imagery &copy; <a href=\"https://www.esri.com/\">Esri</a>, Maxar, Earthstar Geographics"],
-      ["https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png", '&copy; <a href="https://carto.com/attributions">CARTO</a>'],
+      ["https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", "Labels &copy; Esri"],
     ],
     button: "🗺️",
     title: "Switch to street map",
@@ -1098,9 +1099,9 @@ function journeyBasemapStyle() {
   return JOURNEY_BASEMAPS[stored] ? stored : "streets";
 }
 
-// Reliable street fallback (keyless CARTO) if the primary street tiles keep
+// Reliable street fallback (keyless Esri) if the primary street tiles keep
 // failing — e.g. transient Stadia throttling or a regional CDN hiccup.
-const JOURNEY_STREET_FALLBACK = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const JOURNEY_STREET_FALLBACK = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
 
 // Leaflet never retries a failed tile, so one throttled burst leaves gray
 // holes until the next zoom. This wrapper retries each failed tile up to 3
