@@ -909,12 +909,12 @@ function fetchViewCount() {
   r.send();
 }
 
-// Reactions are powered by Lyket's REST API directly (no widget). We render
-// our own markup so we fully control the look, and toggle "like" buttons via
-// PUT .../press. The publishable token is safe in client code by design.
-const LYKET_API = "https://api.lyket.dev/v1";
-const LYKET_KEY = "pt_2ea4d4d2c171e2ad0133096676a6cc";
-const LYKET_NS = "hurutta-blog";
+// Reactions are powered by Abacus (abacus.jasoncameron.dev), a free,
+// keyless counter API: one counter per post per emoji, created on first
+// press. Lyket, the previous provider, deactivates free accounts after a
+// single month over 500 pageviews, which this blog exceeded.
+const ABACUS_API = "https://abacus.jasoncameron.dev";
+const ABACUS_NS = "hurutta-blog";
 
 const REACTIONS = [
   { key: "fire", emoji: "🔥", label: "Fire" },
@@ -924,37 +924,22 @@ const REACTIONS = [
   { key: "thumb", emoji: "👍", label: "Thumbs up" },
 ];
 
-// Stable per-visitor id so Lyket can enforce one like per reaction.
-function getLyketSession() {
-  let s = localStorage.getItem("lyket-session-id");
-  if (!s) {
-    s =
-      Math.random().toString(36).slice(2) +
-      Math.random().toString(36).slice(2);
-    localStorage.setItem("lyket-session-id", s);
-  }
-  return s;
-}
+// One press per visitor per reaction, remembered in this browser. Abacus
+// cannot decrement without an admin key, so there is no un-react.
+const reactedKey = (id) => `reacted:${ABACUS_NS}:${id}`;
+const hasReacted = (id) => { try { return localStorage.getItem(reactedKey(id)) === "1"; } catch (_) { return false; } };
+const markReacted = (id) => { try { localStorage.setItem(reactedKey(id), "1"); } catch (_) { /* private mode */ } };
 
-function lyketHeaders() {
-  return {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: "Bearer " + LYKET_KEY,
-    "x-session-id": getLyketSession(),
-  };
-}
-
-async function lyketRequest(id, method) {
-  const suffix = method === "PUT" ? "/press" : "";
-  const url = `${LYKET_API}/like-buttons/${LYKET_NS}/${encodeURIComponent(
-    id
-  )}${suffix}`;
+// GET /get returns the count (404 when the counter does not exist yet);
+// GET /hit increments by one and returns the new count.
+async function abacusRequest(id, action) {
+  const url = `${ABACUS_API}/${action}/${ABACUS_NS}/${encodeURIComponent(id)}`;
   try {
-    const res = await fetch(url, { method, headers: lyketHeaders() });
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (res.status === 404 && action === "get") return { total_likes: 0, user_has_liked: hasReacted(id) };
     if (!res.ok) return null;
     const json = await res.json();
-    return json.data.attributes; // { total_likes, user_has_liked, ... }
+    return { total_likes: Number(json.value) || 0, user_has_liked: hasReacted(id) };
   } catch (e) {
     return null;
   }
@@ -990,16 +975,21 @@ function initReactions(slug) {
     const id = item.dataset.id;
 
     // Load current count + whether this visitor already reacted.
-    lyketRequest(id, "GET").then((attrs) => paintReaction(item, attrs));
+    abacusRequest(id, "get").then((attrs) => paintReaction(item, attrs));
 
     item.addEventListener("click", async () => {
       if (item.dataset.busy) return;
-      item.dataset.busy = "1";
       item.classList.remove("is-popping");
       void item.offsetWidth; // restart the pop animation
       item.classList.add("is-popping");
-      const attrs = await lyketRequest(id, "PUT");
-      paintReaction(item, attrs);
+      if (hasReacted(id)) return; // already counted from this browser
+      item.dataset.busy = "1";
+      const attrs = await abacusRequest(id, "hit");
+      if (attrs) {
+        markReacted(id);
+        attrs.user_has_liked = true;
+        paintReaction(item, attrs);
+      }
       delete item.dataset.busy;
     });
   });
