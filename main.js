@@ -744,7 +744,8 @@ async function hydratePostPage() {
   if (staleToggle) staleToggle.remove();
 
   try {
-    const [response] = await Promise.all([fetch(`posts/${slug}.md`), loadImageManifest()]);
+    currentPostSlug = slug;
+    const [response] = await Promise.all([fetch(`posts/${slug}.md`), loadImageManifest(), loadItineraryStrips()]);
     if (!response.ok) throw new Error("Post not found");
     const text = await response.text();
     const { frontmatter, body } = parseFrontMatter(text);
@@ -795,6 +796,8 @@ async function hydratePostPage() {
 async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, contentEl) {
   const file = lang === "bn" ? `posts/${slug}.bn.md` : `posts/${slug}.md`;
   try {
+    currentPostSlug = slug;
+    await loadItineraryStrips();
     const response = await fetch(file);
     if (!response.ok) return;
     const text = await response.text();
@@ -1667,7 +1670,107 @@ function enhancePostImages(root) {
   });
 }
 
+// ---- Itinerary ledger helpers ---------------------------------------------
+// Per-day photo strips, built by tools/build_itinerary_strips.py.
+let itineraryStrips = null;
+let itineraryStripsPromise = null;
+let currentPostSlug = "";
+function loadItineraryStrips() {
+  if (itineraryStrips) return Promise.resolve(itineraryStrips);
+  if (!itineraryStripsPromise) {
+    itineraryStripsPromise = fetch("assets/images/iti/index.json")
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}))
+      .then((m) => { itineraryStrips = m; return m; });
+  }
+  return itineraryStripsPromise;
+}
+const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
+const toAsciiDigits = (t) => String(t).replace(/[০-৯]/g, (d) => BN_DIGITS.indexOf(d));
+const toBnDigits = (t) => String(t).replace(/[0-9]/g, (d) => BN_DIGITS[d]);
+const stripTags = (t) => String(t || "").replace(/<[^>]*>/g, "").trim();
+// Nights spent moving rather than staying somewhere.
+const TRANSIT_RE = /\b(bus|train|flight|ferry|boat|on the road|in transit|sleeper)\b|রাতের বাস|রাস্তায়|ট্রেন|লঞ্চ|ফেরি/i;
+
+// "## Day 3 @ Place: Title | 6 April 2026" -> { 3: ["6","April","2026"] }
+function collectDayDates(markdown) {
+  const dates = {};
+  const re = /^##\s+Day\s+([0-9০-৯]+)\s*@[^|\n]*\|\s*([^\n]+)$/gm;
+  let m;
+  while ((m = re.exec(markdown))) dates[toAsciiDigits(m[1])] = m[2].trim().split(/\s+/);
+  return dates;
+}
+function dateRangeLabel(first, last) {
+  if (!first || !last) return "";
+  const [d1, m1, y1] = first, [d2, m2, y2] = last;
+  if (m1 === m2 && y1 === y2) return `${d1}–${d2} ${m1} ${y1 || ""}`.trim();
+  if (y1 === y2) return `${d1} ${m1} – ${d2} ${m2} ${y1 || ""}`.trim();
+  return `${first.join(" ")} – ${last.join(" ")}`;
+}
+
+function renderItinerary(rows, dayDates, isBn) {
+  const num = (n) => (isBn ? toBnDigits(n) : String(n));
+  const strips = (itineraryStrips && itineraryStrips[currentPostSlug]) || {};
+  const days = rows.map((row) => {
+    const day = toAsciiDigits(stripTags(row[0]));
+    const night = stripTags(row[3]);
+    const hasNight = night && !/^[-–—]+$/.test(night);
+    return {
+      day, dest: row[1] || "", notes: stripTags(row[2]), night: hasNight ? night : "",
+      transit: hasNight && TRANSIT_RE.test(night), date: dayDates[day] || null,
+    };
+  });
+  // "night 2" when a stay repeats the previous night's place
+  days.forEach((d, i) => {
+    d.stayCount = d.night && !d.transit && i > 0 && days[i - 1].night === d.night ? days[i - 1].stayCount + 1 : 1;
+  });
+  const stays = new Set(days.filter((d) => d.night && !d.transit).map((d) => d.night)).size;
+  const transitNights = days.filter((d) => d.transit).length;
+  const range = dateRangeLabel(days[0].date, days[days.length - 1].date);
+  const L = isBn
+    ? { days: "দিন", stays: "জায়গায় থাকা", transit: "রাত পথে", night: "রাত", home: "ফেরা", label: "ভ্রমণসূচি" }
+    : { days: "days", stays: "stays", transit: transitNights === 1 ? "night in transit" : "nights in transit", night: "night", home: "Homebound", label: "Itinerary" };
+
+  let html = `<div class="md-itinerary" role="list" aria-label="${L.label}">`;
+  html += `<div class="iti-summary">`;
+  html += `<span class="iti-stat"><strong>${num(days.length)}</strong> ${L.days}</span>`;
+  if (range) html += `<span class="iti-stat iti-stat-range">${range}</span>`;
+  if (stays) html += `<span class="iti-stat"><strong>${num(stays)}</strong> ${L.stays}</span>`;
+  if (transitNights) html += `<span class="iti-stat iti-stat-transit"><strong>${num(transitNights)}</strong> ${L.transit}</span>`;
+  html += `</div>`;
+
+  days.forEach((d, i) => {
+    const last = i === days.length - 1;
+    const chips = d.notes ? d.notes.split(/\s*[,،;]\s*|\s*,\s*|\s*、\s*/).filter(Boolean) : [];
+    // "4 April" -> "4 Apr"; Bengali month names stay whole
+    const dateShort = d.date ? `${d.date[0]} ${/^[A-Za-z]+$/.test(d.date[1] || "") ? d.date[1].slice(0, 3) : d.date[1] || ""}`.trim() : "";
+    let nightHtml = "";
+    if (d.transit) {
+      nightHtml = `<span class="iti-night is-transit"><svg class="iti-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5A1.5 1.5 0 0 1 4.5 2h7A1.5 1.5 0 0 1 13 3.5V11a1 1 0 0 1-1 1v1.25a.75.75 0 0 1-1.5 0V12h-5v1.25a.75.75 0 0 1-1.5 0V12a1 1 0 0 1-1-1V3.5Zm1.5.5v3.5h7V4h-7Zm.75 5.25a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm5.5 0a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" fill="currentColor"/></svg>${d.night}</span>`;
+    } else if (d.night) {
+      nightHtml = `<span class="iti-night"><svg class="iti-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.2 1.6a.6.6 0 0 1 .17.66A5.4 5.4 0 0 0 13.7 9.6a.6.6 0 0 1 .79.73A6.6 6.6 0 1 1 5.6 1.45a.6.6 0 0 1 .6.15Z" fill="currentColor"/></svg>${d.night}${d.stayCount > 1 ? `<span class="iti-night-n"> · ${L.night} ${num(d.stayCount)}</span>` : ""}</span>`;
+    } else if (last) {
+      nightHtml = `<span class="iti-night is-home"><svg class="iti-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M14.3 2.2c.5.5.3 1.4-.4 2.1L11.6 6.6l1.3 5.6-1 1-2.6-4.4-2.1 2.1.3 1.9-.8.8-1.3-2.4-2.4-1.3.8-.8 1.9.3 2.1-2.1L1.4 4.1l1-1 5.6 1.3 2.3-2.3c.7-.7 1.6-.9 2.1-.4l1.9.5Z" fill="currentColor"/></svg>${L.home}</span>`;
+    }
+    const strip = strips[d.day];
+    const photo = strip
+      ? `<img class="iti-photo" src="${strip.src}" alt="" loading="lazy" decoding="async" />`
+      : "";
+    html +=
+      `<a class="iti-item${d.transit ? " is-transit" : ""}${last ? " is-last" : ""}" href="#day-${d.day}" role="listitem">` +
+      `<span class="iti-node"><span class="iti-node-day">${num(d.day)}</span>${dateShort ? `<span class="iti-node-date">${dateShort}</span>` : ""}</span>` +
+      `<span class="iti-card${strip ? " has-photo" : ""}">${photo}` +
+      `<span class="iti-head"><span class="iti-dest">${d.dest}</span>${nightHtml}</span>` +
+      (chips.length ? `<span class="iti-chips">${chips.map((c) => `<span class="iti-chip">${c}</span>`).join("")}</span>` : "") +
+      `</span></a>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
 function markdownToHtml(markdown) {
+  const dayDates = collectDayDates(markdown);
+  const isBn = /[\u0980-\u09FF]/.test(markdown);
   const lines = markdown.split(/\r?\n/);
   let html = "";
   let buffer = [];
@@ -1860,28 +1963,12 @@ function markdownToHtml(markdown) {
       // a journey rail: numbered day nodes on a glowing timeline, each card
       // linking to that day's section. Generic tables keep the table layout.
       const isItinerary =
-        headerLabels[0]?.toLowerCase() === "day" &&
+        ["day", "দিন"].includes(headerLabels[0]?.toLowerCase()) &&
         headerCells.length >= 3 &&
         rows.length > 0 &&
-        rows.every((row) => /^\d+$/.test((row[0] || "").replace(/<[^>]*>/g, "").trim()));
+        rows.every((row) => /^[0-9০-৯]+$/.test((row[0] || "").replace(/<[^>]*>/g, "").trim()));
       if (isItinerary) {
-        html += `<div class="md-itinerary">`;
-        rows.forEach((row) => {
-          const dayNum = (row[0] || "").replace(/<[^>]*>/g, "").trim();
-          const dest = row[1] || "";
-          const notes = row[2] || "";
-          const night = (row[3] || "").trim();
-          html +=
-            `<a class="iti-item" href="#day-${dayNum}">` +
-            `<span class="iti-node">${dayNum}</span>` +
-            `<span class="iti-card">` +
-            `<span class="iti-head"><span class="iti-dest">${dest}</span>` +
-            (night ? `<span class="iti-night"><span class="iti-night-icon">☾</span>${night}</span>` : "") +
-            `</span>` +
-            (notes ? `<span class="iti-notes">${notes}</span>` : "") +
-            `</span></a>`;
-        });
-        html += `</div>`;
+        html += renderItinerary(rows, dayDates, isBn);
         continue;
       }
 

@@ -4289,180 +4289,190 @@ body[data-page="post"] .content-map-links a {
   }
 }
 
-/* ---- Itinerary journey rail --------------------------------------------- */
-/* "At a glance" tables render as a timeline: a gradient rail, numbered glass
-   day-nodes, and a card per day linking to that day's section. */
+/* ---- Itinerary ledger ---------------------------------------------------
+   "At a glance" tables render as a compact trip ledger: a summary strip,
+   then one row per day on a rail. Each node carries the day and its date,
+   highlights are chips, nights in transit get a dashed rail and a bus
+   marker, repeated stays say "night 2". Rows link to the day's section. */
 .md-itinerary {
   position: relative;
-  margin: 1.75rem 0;
+  margin: 1.5rem 0 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.95rem;
+  gap: 0.55rem;
 }
-
-.md-itinerary::before {
-  content: "";
-  position: absolute;
-  left: 19px;
-  top: 16px;
-  bottom: 16px;
-  width: 2px;
+.iti-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.iti-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.32rem 0.75rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  opacity: 0.35;
+  border: 1px solid var(--border);
+  background: var(--tile-surface);
+  font-size: 0.78rem;
+  color: var(--muted);
 }
+.iti-stat strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.iti-stat-range { color: var(--text); font-weight: 600; border-color: rgba(130, 255, 218, 0.35); background: rgba(130, 255, 218, 0.07); }
+.iti-stat-transit { border-style: dashed; }
 
 .iti-item {
   position: relative;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  column-gap: 0.95rem;
-  align-items: start;
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 0.85rem;
+  align-items: stretch;
   text-decoration: none;
   color: inherit;
 }
-
+/* rail segment from this node down to the next one */
+.iti-item::before {
+  content: "";
+  position: absolute;
+  left: 27px;
+  top: 26px;
+  bottom: -0.55rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(130, 255, 218, 0.5), rgba(76, 111, 255, 0.4));
+}
+.iti-item.is-last::before { display: none; }
+/* a night on the road: dashed rail to the next morning */
+.iti-item.is-transit::before {
+  background: repeating-linear-gradient(180deg, var(--accent) 0 5px, transparent 5px 10px);
+  opacity: 0.7;
+}
 .iti-node {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--accent);
-  background: var(--surface-opaque);
-  border: 1px solid rgba(130, 255, 218, 0.35);
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    0 0 16px rgba(130, 255, 218, 0.14);
   position: relative;
   z-index: 1;
-  margin-top: 4px;
+  align-self: start;
+  width: 56px;
+  padding: 0.38rem 0 0.32rem;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  background: var(--surface-opaque);
+  border: 1px solid rgba(130, 255, 218, 0.35);
+  box-shadow: inset 0 1px 0 var(--glass-rim-hi), 0 0 14px rgba(130, 255, 218, 0.12);
   transition: transform 0.45s var(--glass-spring), border-color 0.3s ease, box-shadow 0.3s ease;
 }
-
+.iti-node-day {
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.iti-node-date {
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
 .iti-card {
   display: block;
+  min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--card-surface);
-  padding: 0.8rem 1rem 0.85rem;
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    inset 0 -1px 0 var(--glass-rim-lo);
-  transition: transform 0.45s var(--glass-spring), border-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.6rem 0.85rem 0.65rem;
+  box-shadow: inset 0 1px 0 var(--glass-rim-hi), inset 0 -1px 0 var(--glass-rim-lo);
+  transition: transform 0.45s var(--glass-spring), border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
-
+.iti-item.is-transit .iti-card { border-style: dashed; }
 .iti-item:hover .iti-card,
 .iti-item:focus-visible .iti-card {
-  border-color: rgba(130, 255, 218, 0.4);
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    inset 0 -1px 0 var(--glass-rim-lo),
-    0 12px 30px -14px rgba(2, 4, 10, 0.7);
+  border-color: rgba(130, 255, 218, 0.45);
+  transform: translateX(3px);
+  box-shadow: inset 0 1px 0 var(--glass-rim-hi), inset 0 -1px 0 var(--glass-rim-lo), 0 12px 30px -16px rgba(2, 4, 10, 0.7);
 }
-
-.iti-item:hover .iti-node {
+.iti-item:hover .iti-node,
+.iti-item:focus-visible .iti-node {
   border-color: var(--accent);
-  transform: scale(1.1);
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    0 0 22px rgba(130, 255, 218, 0.3);
+  transform: scale(1.05);
+  box-shadow: inset 0 1px 0 var(--glass-rim-hi), 0 0 20px rgba(130, 255, 218, 0.28);
 }
-
-.iti-item:active .iti-card {
-  transform: scale(0.99);
-}
-
+.iti-item:focus-visible { outline: none; }
+.iti-item:focus-visible .iti-card { outline: 2px solid var(--accent); outline-offset: 2px; }
+.iti-item:active .iti-card { transform: scale(0.995); }
 .iti-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.35rem 0.75rem;
+  gap: 0.3rem 0.75rem;
 }
-
-.iti-dest {
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.01em;
-}
-
+.iti-dest { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.01em; }
 .iti-night {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.18rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid rgba(130, 255, 218, 0.28);
-  background: rgba(130, 255, 218, 0.07);
-  color: var(--muted);
   font-size: 0.72rem;
+  color: var(--muted);
   white-space: nowrap;
 }
-
-.iti-night-icon {
-  color: var(--accent);
-  font-size: 0.8rem;
-  line-height: 1;
+.iti-night .iti-ico { width: 12px; height: 12px; color: var(--accent); flex: none; }
+.iti-night-n { opacity: 0.75; }
+.iti-night.is-transit {
+  color: var(--text);
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  border: 1px dashed rgba(130, 255, 218, 0.5);
+  background: rgba(130, 255, 218, 0.06);
 }
-
-.iti-notes {
-  display: block;
-  margin-top: 0.4rem;
+.iti-night.is-home { color: var(--text); }
+.iti-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+.iti-chip {
+  font-size: 0.74rem;
+  line-height: 1.3;
+  padding: 0.16rem 0.55rem;
+  border-radius: 999px;
+  background: var(--tile-surface);
+  border: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.87rem;
-  line-height: 1.55;
 }
-
-:root[data-theme="light"] .iti-node {
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    0 0 16px rgba(37, 99, 235, 0.12);
-}
-
-:root[data-theme="light"] .iti-item:hover .iti-card {
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    inset 0 -1px 0 var(--glass-rim-lo),
-    0 12px 26px -14px rgba(50, 62, 120, 0.35);
-}
-
-:root[data-theme="light"] .iti-item:hover .iti-node {
-  box-shadow:
-    inset 0 1px 0 var(--glass-rim-hi),
-    0 0 22px rgba(37, 99, 235, 0.25);
-}
-
-:root[data-theme="light"] .iti-night {
-  border-color: rgba(37, 99, 235, 0.25);
-  background: rgba(37, 99, 235, 0.06);
-}
-
+.iti-item:hover .iti-chip { color: var(--text); }
+:root[data-theme="light"] .iti-node { border-color: rgba(37, 99, 235, 0.35); box-shadow: inset 0 1px 0 var(--glass-rim-hi), 0 0 14px rgba(37, 99, 235, 0.1); }
+:root[data-theme="light"] .iti-item::before { background: linear-gradient(180deg, rgba(37, 99, 235, 0.45), rgba(124, 58, 237, 0.35)); }
+:root[data-theme="light"] .iti-item.is-transit::before { background: repeating-linear-gradient(180deg, var(--accent) 0 5px, transparent 5px 10px); }
+:root[data-theme="light"] .iti-stat-range { border-color: rgba(37, 99, 235, 0.3); background: rgba(37, 99, 235, 0.06); }
+:root[data-theme="light"] .iti-night.is-transit { border-color: rgba(37, 99, 235, 0.45); background: rgba(37, 99, 235, 0.05); }
+:root[data-theme="light"] .iti-item:hover .iti-card,
+:root[data-theme="light"] .iti-item:focus-visible .iti-card { border-color: rgba(37, 99, 235, 0.4); box-shadow: inset 0 1px 0 var(--glass-rim-hi), 0 12px 26px -16px rgba(50, 62, 120, 0.35); }
+:root[data-theme="light"] .iti-item:hover .iti-node { border-color: var(--accent); box-shadow: inset 0 1px 0 var(--glass-rim-hi), 0 0 18px rgba(37, 99, 235, 0.22); }
 @media (max-width: 640px) {
-  .md-itinerary::before {
-    left: 15px;
-  }
-
-  .iti-item {
-    grid-template-columns: 32px minmax(0, 1fr);
-    column-gap: 0.75rem;
-  }
-
-  .iti-node {
-    width: 32px;
-    height: 32px;
-    font-size: 0.85rem;
-  }
-
-  .iti-card {
-    padding: 0.7rem 0.85rem 0.75rem;
-  }
+  .iti-item { grid-template-columns: 46px minmax(0, 1fr); column-gap: 0.6rem; }
+  .iti-item::before { left: 22px; }
+  .iti-node { width: 46px; border-radius: 12px; }
+  .iti-node-day { font-size: 0.95rem; }
+  .iti-node-date { font-size: 0.55rem; }
+  .iti-card { padding: 0.55rem 0.7rem 0.6rem; }
+  .iti-dest { font-size: 0.9rem; }
+  /* phones: highlights as one dotted line instead of stacked chips */
+  .iti-chips { display: block; margin-top: 0.35rem; font-size: 0.78rem; line-height: 1.5; color: var(--muted); }
+  .iti-chip { display: inline; padding: 0; border: 0; background: none; font-size: inherit; }
+  .iti-chip + .iti-chip::before { content: " · "; color: var(--accent); opacity: 0.7; }
+  .iti-head { flex-wrap: nowrap; align-items: flex-start; }
+  .iti-night { font-size: 0.68rem; padding-top: 0.15rem; }
+  .iti-night-n { display: none; }
+  .iti-stat { font-size: 0.72rem; padding: 0.28rem 0.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iti-card, .iti-node { transition: none; }
 }
 
 /* --- ASCII portrait terminal ------------------------------------------- */
@@ -5500,3 +5510,69 @@ body[data-page="post"] .content-map-links a {
 /* reactions and comments stay out of sight until the post has rendered */
 .reactions-wrapper.is-pending, .comments-wrapper.is-pending { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* ---- Itinerary photo strips ---------------------------------------------
+   One pre-composed strip per day (three slanted panels, ~10 KB WebP) sits
+   behind the card's right side and fades in from the left, so the text side
+   stays clean. Same size and fade on every card. Phones: a short banner on
+   top of the card instead, since the highlights run full width there. */
+.iti-card.has-photo { position: relative; overflow: hidden; isolation: isolate; }
+.iti-card.has-photo > :not(.iti-photo) { position: relative; z-index: 1; }
+.iti-photo {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(54%, 360px);
+  object-fit: cover;
+  object-position: right center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.65) 24%, #000 48%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.65) 24%, #000 48%);
+  opacity: 0.78;
+  transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+}
+.iti-item:hover .iti-photo,
+.iti-item:focus-visible .iti-photo { opacity: 1; transform: scale(1.03); transform-origin: right center; }
+/* text that sits over the photo gets a glass pill */
+.iti-card.has-photo .iti-night {
+  padding: 0.14rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(10, 13, 24, 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #e8edf2;
+}
+.iti-card.has-photo .iti-night.is-transit { background: rgba(10, 13, 24, 0.62); border-color: rgba(130, 255, 218, 0.55); }
+.iti-card.has-photo .iti-chip {
+  background: rgba(10, 13, 24, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+:root[data-theme="light"] .iti-photo { opacity: 0.86; }
+:root[data-theme="light"] .iti-item:hover .iti-photo { opacity: 1; }
+:root[data-theme="light"] .iti-card.has-photo .iti-night,
+:root[data-theme="light"] .iti-card.has-photo .iti-night.is-transit { background: rgba(255, 255, 255, 0.78); color: var(--text); }
+:root[data-theme="light"] .iti-card.has-photo .iti-chip { background: rgba(255, 255, 255, 0.72); }
+@media (max-width: 640px) {
+  .iti-card.has-photo { padding-top: 0; }
+  .iti-photo {
+    position: relative;
+    display: block;
+    width: calc(100% + 1.4rem);
+    height: 64px;
+    margin: 0 -0.7rem 0.5rem;
+    object-position: center;
+    height: 76px;
+    opacity: 0.88;
+    -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+  }
+  .iti-item:hover .iti-photo { transform: none; }
+  .iti-card.has-photo .iti-night { background: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0.15rem 0 0; color: var(--muted); }
+  .iti-card.has-photo .iti-night.is-transit { padding: 0.12rem 0.55rem; background: rgba(130, 255, 218, 0.06); color: var(--text); }
+  :root[data-theme="light"] .iti-card.has-photo .iti-night { background: none; color: var(--muted); }
+  .iti-card.has-photo .iti-chip { background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+@media (prefers-reduced-motion: reduce) { .iti-photo { transition: none; } .iti-item:hover .iti-photo { transform: none; } }

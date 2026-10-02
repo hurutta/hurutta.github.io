@@ -1,0 +1,80 @@
+{
+ "travel/thailand-2026": {
+  "1": {
+   "src": "assets/images/iti/thailand-2026/day-1.webp"
+  },
+  "2": {
+   "src": "assets/images/iti/thailand-2026/day-2.webp"
+  },
+  "3": {
+   "src": "assets/images/iti/thailand-2026/day-3.webp"
+  },
+  "4": {
+   "src": "assets/images/iti/thailand-2026/day-4.webp"
+  },
+  "5": {
+   "src": "assets/images/iti/thailand-2026/day-5.webp"
+  },
+  "6": {
+   "src": "assets/images/iti/thailand-2026/day-6.webp"
+  },
+  "7": {
+   "src": "assets/images/iti/thailand-2026/day-7.webp"
+  },
+  "8": {
+   "src": "assets/images/iti/thailand-2026/day-8.webp"
+  },
+  "9": {
+   "src": "assets/images/iti/thailand-2026/day-9.webp"
+  }
+ },
+ "travel/nepal-2025": {
+  "1": {
+   "src": "assets/images/iti/nepal-2025/day-1.webp"
+  },
+  "2": {
+   "src": "assets/images/iti/nepal-2025/day-2.webp"
+  },
+  "3": {
+   "src": "assets/images/iti/nepal-2025/day-3.webp"
+  },
+  "4": {
+   "src": "assets/images/iti/nepal-2025/day-4.webp"
+  },
+  "5": {
+   "src": "assets/images/iti/nepal-2025/day-5.webp"
+  },
+  "6": {
+   "src": "assets/images/iti/nepal-2025/day-6.webp"
+  },
+  "7": {
+   "src": "assets/images/iti/nepal-2025/day-7.webp"
+  }
+ },
+ "travel/srilanka-2025": {
+  "1": {
+   "src": "assets/images/iti/srilanka-2025/day-1.webp"
+  },
+  "2": {
+   "src": "assets/images/iti/srilanka-2025/day-2.webp"
+  },
+  "3": {
+   "src": "assets/images/iti/srilanka-2025/day-3.webp"
+  },
+  "4": {
+   "src": "assets/images/iti/srilanka-2025/day-4.webp"
+  },
+  "5": {
+   "src": "assets/images/iti/srilanka-2025/day-5.webp"
+  },
+  "6": {
+   "src": "assets/images/iti/srilanka-2025/day-6.webp"
+  },
+  "7": {
+   "src": "assets/images/iti/srilanka-2025/day-7.webp"
+  },
+  "8": {
+   "src": "assets/images/iti/srilanka-2025/day-8.webp"
+  }
+ }
+}
