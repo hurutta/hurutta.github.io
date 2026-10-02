@@ -19,46 +19,71 @@
 
       <section class="middle-panel">
         <div class="panel" id="chat">
-          <p class="eyebrow">TinyJawad</p>
-          <h2>Ask me about my work.</h2>
-          <p class="lede">
-            A small language model with my professional profile built in, running
-            entirely in your browser on your own CPU/GPU. Nothing you type leaves
-            your machine.
-          </p>
+          <header class="tiny-hero">
+            <div class="tiny-hero-copy">
+              <p class="eyebrow">TinyJawad</p>
+              <h2 class="tiny-hero-title">Ask anything <span class="tiny-grad">about me.</span></h2>
+              <p class="lede tiny-hero-lede">
+                A small language model that knows my story — where I work, what I
+                studied, what I build and where I've been — running entirely in your
+                browser. Nothing you type leaves your device.
+              </p>
+            </div>
+            <aside class="tiny-hero-side" aria-label="At a glance">
+              <div class="tiny-side-row tiny-live"><span class="tiny-live-dot" aria-hidden="true"></span>Live on your device</div>
+              <div class="tiny-side-row"><strong id="chatViewCount">—</strong> unique visitors</div>
+              <div class="tiny-side-row">build <strong id="chatBuild">—</strong></div>
+              <hr class="tiny-side-rule" />
+              <div class="tiny-side-row tiny-side-fact">Runs in your browser</div>
+              <div class="tiny-side-row tiny-side-fact">Nothing is sent to a server</div>
+              <div class="tiny-side-row tiny-side-fact">84 MB chat model, optional</div>
+            </aside>
+          </header>
 
           <section class="cv-section tiny-chat-section" id="tinychat">
-            <div class="tiny-chat-status" id="tinyChatStatus">
-              <div class="tiny-status-line">
-                <span class="tiny-status-text" id="tinyStatusText">Loading…</span>
-                <span class="tiny-status-badge" id="tinyDeviceBadge" hidden></span>
-                <button type="button" class="tiny-load-model" id="tinyLoadModel" hidden>
-                  Download model <small>84 MB · general questions</small>
+            <div class="tiny-chat-card">
+              <header class="tiny-chat-head">
+                <div class="tiny-chat-id">
+                  <span class="tiny-chat-mark" aria-hidden="true">TJ</span>
+                  <div class="tiny-chat-title">
+                    <strong>TinyJawad</strong>
+                    <span class="tiny-status-text" id="tinyStatusText">Loading…</span>
+                  </div>
+                </div>
+                <div class="tiny-chat-meta">
+                  <span class="tiny-status-badge" id="tinyDeviceBadge" hidden></span>
+                  <button type="button" class="tiny-load-model" id="tinyLoadModel" hidden>
+                    Download model <small>84 MB<span class="tiny-load-why"> · general questions</span></small>
+                  </button>
+                </div>
+                <div class="tiny-progress" id="tinyProgress" role="progressbar" aria-label="Model download">
+                  <div class="tiny-progress-fill" id="tinyProgressFill"></div>
+                </div>
+              </header>
+
+              <div class="chat-window tiny-chat-window" id="tinyChatWindow" aria-live="polite"></div>
+
+              <form class="tiny-chat-form" id="tinyChatForm" autocomplete="off">
+                <input
+                  type="text"
+                  id="tinyChatInput"
+                  placeholder="Ask about my work, studies, projects, travel…"
+                  maxlength="200"
+                  disabled
+                />
+                <button type="submit" id="tinyChatSend" disabled aria-label="Send">
+                  <span class="tiny-send-label">Send</span>
+                  <svg class="tiny-send-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 10h12M10 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-              </div>
-              <div class="tiny-progress" id="tinyProgress">
-                <div class="tiny-progress-fill" id="tinyProgressFill"></div>
-              </div>
+              </form>
             </div>
-
-            <div class="chat-window tiny-chat-window" id="tinyChatWindow" aria-live="polite"></div>
-
-            <form class="tiny-chat-form" id="tinyChatForm" autocomplete="off">
-              <input
-                type="text"
-                id="tinyChatInput"
-                placeholder="Ask about my work, education, projects…"
-                maxlength="200"
-                disabled
-              />
-              <button type="submit" id="tinyChatSend" disabled>Send</button>
-            </form>
             <p class="tiny-chat-disclaimer">
-              A small on-device model with my professional profile. Answers about
-              my work are exact; general answers are best-effort. For anything
-              important, email me directly.
+              Answers about me are exact; general answers are best-effort.
+              For anything important, email me directly.
             </p>
           </section>
+        </div>
+      </section>
         </div>
       </section>
 

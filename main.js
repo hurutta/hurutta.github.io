@@ -331,6 +331,24 @@ function decorateSocialLinks() {
 }
 
 renderPartials();
+
+// On desktop the left panel is position: fixed so it never moves with the
+// page. Its grid column stays as a placeholder; measure that column so the
+// fixed panel lands exactly on it (the shell is centred with fluid padding,
+// and 100vw would be off by the scrollbar width on Windows).
+function placeLeftPanel() {
+  const shell = document.querySelector("main.shell");
+  const panel = document.querySelector(".left-panel");
+  if (!shell || !panel) return;
+  const cs = getComputedStyle(shell);
+  const track = parseFloat(cs.gridTemplateColumns.split(" ")[0]);
+  if (!Number.isFinite(track)) return; // single-column layout: panel is static
+  const x = shell.getBoundingClientRect().left + parseFloat(cs.paddingLeft);
+  document.documentElement.style.setProperty("--left-x", `${Math.round(x)}px`);
+  document.documentElement.style.setProperty("--left-w", `${Math.round(track)}px`);
+}
+placeLeftPanel();
+window.addEventListener("resize", placeLeftPanel, { passive: true });
 let themeToggleButtons = [];
 refreshThemeToggleButtons();
 setActiveShellNav(document.body.dataset.page || "home");
@@ -2220,9 +2238,11 @@ function initTinyChat() {
     input.disabled = on;
     // While generating, the button stays live and becomes Stop.
     send.disabled = false;
-    send.textContent = on ? "Stop" : "Send";
+    const label = send.querySelector(".tiny-send-label");
+    if (label) label.textContent = on ? "Stop" : "Send"; else send.textContent = on ? "Stop" : "Send";
+    send.setAttribute("aria-label", on ? "Stop" : "Send");
     send.classList.toggle("is-stop", on);
-    if (!on) input.focus();
+    if (!on) input.focus({ preventScroll: true });
   };
 
   const requestStop = () => {
@@ -2253,6 +2273,15 @@ function initTinyChat() {
   const lowMemory = typeof navigator.deviceMemory === "number" && navigator.deviceMemory <= 4;
   const autoLLM = !(isMobile || lowMemory);
   const loadModelBtn = document.getElementById("tinyLoadModel");
+  // Unique-visitor count for this page, same GoatCounter public counter the
+  // blog posts use.
+  const viewEl = document.getElementById("chatViewCount");
+  if (viewEl) {
+    fetch(`https://hurutta.goatcounter.com/counter//chat.html.json?_=${Date.now()}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+      .then((d) => { viewEl.textContent = d.count_unique ?? d.count ?? "—"; })
+      .catch(() => { /* counter unavailable — leave the dash */ });
+  }
   let llmReady = false;
   let llmRequested = autoLLM;
   const LLM_STATUS = "Downloading general-chat model (one-time, 84 MB)…";
@@ -2266,7 +2295,7 @@ function initTinyChat() {
   };
   if (loadModelBtn) loadModelBtn.addEventListener("click", () => { llmRequested = false; startLLMDownload(); });
   if (isMobile) {
-    input.placeholder = "Ask about my work…";
+    input.placeholder = "Ask anything about me…";
     // Phones open on the header; bring the chat into view once it is ready,
     // unless the visitor has already started scrolling.
     let userScrolled = false;
@@ -2307,12 +2336,27 @@ function initTinyChat() {
       progress.hidden = !autoLLM;
       progress.classList.remove("indeterminate");
       deviceBadge.textContent = `profile answers · ${msg.build || ""}`.trim();
+      const buildEl = document.getElementById("chatBuild");
+      if (buildEl && msg.build) buildEl.textContent = msg.build;
       deviceBadge.hidden = false;
       setBusy(false);
       addBubble(
         "answer",
-        "Hello. I'm Jawad's portfolio assistant, running on your machine. Ask me about his work, education or projects."
+        "Hello. I'm Jawad's assistant, running on your device. Ask me anything about him — work, studies, projects, travel."
       );
+      // Suggested questions: a welcoming empty state that also steers
+      // visitors to the exact, curated answers. Removed on the first send.
+      const suggest = document.createElement("div");
+      suggest.className = "tiny-suggest";
+      suggest.setAttribute("aria-label", "Suggested questions");
+      for (const q of ["What do you do at bKash?", "What's your tech stack?", "Tell me about your thesis", "Competitive programming?", "How can I contact you?"]) {
+        const chip = document.createElement("button");
+        chip.type = "button"; chip.className = "tiny-chip"; chip.textContent = q;
+        chip.addEventListener("click", () => { if (input.disabled) return; input.value = q; form.requestSubmit(); });
+        suggest.appendChild(chip);
+      }
+      windowEl.appendChild(suggest);
+      pinToBottom(true);
       if (autoLLM) {
         statusText.textContent = LLM_STATUS;
       } else {
@@ -2403,6 +2447,7 @@ function initTinyChat() {
     const q = input.value.trim();
     if (!q || input.disabled) return;
     input.value = "";
+    windowEl.querySelector(".tiny-suggest")?.remove();
     addBubble("question", q);
     history.push({ q, a: null });
     streamBubble = addBubble("answer streaming pending", "");
