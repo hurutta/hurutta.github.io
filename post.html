@@ -20,19 +20,24 @@
       <section class="middle-panel">
         <div class="panel post-panel">
           <a class="ghost-link back-link" href="blog.html" data-shell-link>← Back to blog</a>
-          <p class="eyebrow" id="postCategory">Journal</p>
-          <h1 id="postTitle">Loading post…</h1>
-          <p class="post-meta" id="postMeta">Please wait.</p>
-          <article class="post-card" id="postContent">
-            <p>Fetching story...</p>
+          <p class="eyebrow" id="postCategory" aria-busy="true"><span class="sk sk-chip"></span></p>
+          <h1 id="postTitle" aria-busy="true"><span class="sk sk-title"></span><span class="sk sk-title sk-title-2"></span></h1>
+          <p class="post-meta" id="postMeta" aria-busy="true"><span class="sk sk-meta"></span></p>
+          <article class="post-card" id="postContent" aria-busy="true">
+            <div class="post-skeleton" aria-hidden="true">
+              <span class="sk sk-h"></span>
+              <span class="sk sk-line"></span><span class="sk sk-line"></span><span class="sk sk-line sk-line-short"></span>
+              <span class="sk sk-block"></span>
+              <span class="sk sk-line"></span><span class="sk sk-line sk-line-short"></span>
+            </div>
           </article>
-          <div class="reactions-wrapper">
+          <div class="reactions-wrapper is-pending">
             <div class="reactions-header">
               <p class="reactions-header-text eyebrow">Reactions</p>
             </div>
             <div class="reactions-grid" id="reactionsContainer"></div>
           </div>
-          <div class="comments-wrapper">
+          <div class="comments-wrapper is-pending">
             <div class="comments-header">
               <p class="comments-header-text eyebrow">Comments</p>
             </div>

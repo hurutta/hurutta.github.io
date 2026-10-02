@@ -885,6 +885,8 @@ function appendMediumCard(contentEl, mediumUrl) {
 }
 
 function populatePostFrontmatter(meta, titleEl, metaEl, categoryEl) {
+  [titleEl, metaEl, categoryEl, document.getElementById("postContent")].forEach((el) => el && el.removeAttribute("aria-busy"));
+  document.querySelectorAll(".reactions-wrapper.is-pending, .comments-wrapper.is-pending").forEach((el) => el.classList.remove("is-pending"));
   titleEl.textContent = meta.title || "Untitled";
   const metaParts = [meta.date, meta.reading_time].filter(Boolean).join(" · ");
   const countDisplay = cachedViewCount !== null ? cachedViewCount : "—";
@@ -1982,6 +1984,8 @@ function injectPostContentMap() {
 }
 
 function renderPostError(titleEl, metaEl, categoryEl, contentEl, message) {
+  [titleEl, metaEl, categoryEl, contentEl].forEach((el) => el.removeAttribute("aria-busy"));
+  document.querySelectorAll(".reactions-wrapper.is-pending, .comments-wrapper.is-pending").forEach((el) => el.classList.remove("is-pending"));
   titleEl.textContent = "Unable to load that post.";
   metaEl.textContent = "";
   categoryEl.textContent = "Error";
