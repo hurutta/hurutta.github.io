@@ -724,6 +724,7 @@ function initChatSection() {
 // --- Post renderer --------------------------------------------------------
 async function hydratePostPage() {
   cachedViewCount = null;
+  destroyCommentNudge();
   const titleEl = document.getElementById("postTitle");
   const metaEl = document.getElementById("postMeta");
   const contentEl = document.getElementById("postContent");
@@ -759,6 +760,7 @@ async function hydratePostPage() {
     fetchViewCount();
     initReactions(slug);
     initComments(slug);
+    initCommentNudge(slug);
 
     // Check if Bengali version exists
     try {
@@ -1036,6 +1038,105 @@ function initComments(slug) {
   };
   gc.src = "https://integration.graphcomment.com/gc_graphlogin.js?" + Date.now();
   document.head.appendChild(gc);
+}
+
+// --- Comment nudge -----------------------------------------------------------
+// A small card that invites the reader to the comments after 10 s of
+// visible time on the post, on every visit and every reload. It never blocks
+// the page and hides by itself after 7 s. A bar along the bottom drains over
+// those 7 s and the card leaves when it runs out; CSS pauses it while the
+// card is hovered or focused, so the bar and the real timeout never drift.
+const NUDGE = { dwell: 10, linger: 7000 };
+let commentNudge = null;
+
+function nudgeCopy(slug) {
+  const bn = currentLang === "bn";
+  const travel = slug.startsWith("travel/");
+  if (bn) {
+    return travel
+      ? { title: "ভ্রমণের কোনো গল্প বা টিপস আছে?", body: "মন্তব্যে লিখে ফেলুন, বা যা খুশি জিজ্ঞেস করুন।", cta: "মন্তব্য লিখুন", close: "বন্ধ করুন" }
+      : { title: "লেখাটা কেমন লাগছে?", body: "প্রশ্ন, মতামত বা শুধু একটা হ্যালো, সবই স্বাগত।", cta: "মন্তব্য লিখুন", close: "বন্ধ করুন" };
+  }
+  return travel
+    ? { title: "Got a travel story or tip?", body: "Share it in the comments, or ask me anything.", cta: "Leave a comment", close: "Dismiss" }
+    : { title: "Enjoying the read?", body: "A question, a thought or just a hello. All welcome.", cta: "Leave a comment", close: "Dismiss" };
+}
+
+function scrollToComments() {
+  const target = document.getElementById("comments");
+  if (!target) return;
+  target.scrollIntoView({ behavior: prefersReducedMotion.matches ? "auto" : "smooth", block: "start" });
+  target.focus({ preventScroll: true });
+  target.classList.remove("is-beckoning");
+  void target.offsetWidth;
+  target.classList.add("is-beckoning");
+  target.addEventListener("animationend", () => target.classList.remove("is-beckoning"), { once: true });
+}
+
+function destroyCommentNudge() {
+  if (!commentNudge) return;
+  commentNudge.cleanup.forEach((fn) => fn());
+  const card = commentNudge.card;
+  if (card) {
+    card.classList.remove("is-shown");
+    setTimeout(() => card.remove(), 400);
+  }
+  commentNudge = null;
+}
+
+function initCommentNudge(slug) {
+  destroyCommentNudge();
+  if (!document.getElementById("comments")) return;
+
+  const state = { cleanup: [], card: null, dwell: 0, done: false };
+  commentNudge = state;
+
+  const tick = setInterval(() => {
+    if (state.done || document.visibilityState !== "visible") return;
+    state.dwell += 1;
+    if (state.dwell >= NUDGE.dwell) show();
+  }, 1000);
+  state.cleanup.push(() => clearInterval(tick));
+
+  function hide() {
+    if (!state.card) return;
+    const card = state.card;
+    state.card = null;
+    card.classList.remove("is-shown");
+    setTimeout(() => card.remove(), 400);
+  }
+
+  function show() {
+    state.done = true;
+    const copy = nudgeCopy(slug);
+    const card = document.createElement("aside");
+    card.className = "comment-nudge";
+    card.setAttribute("role", "status");
+    card.setAttribute("aria-label", copy.title);
+    if (currentLang === "bn") card.lang = "bn";
+    card.innerHTML = `
+      <span class="comment-nudge-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 17h-7.2L7.5 20.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 10h8M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="comment-nudge-text">
+        <strong>${copy.title}</strong>
+        <small>${copy.body}</small>
+      </span>
+      <button type="button" class="comment-nudge-cta">${copy.cta} <span aria-hidden="true">↓</span></button>
+      <button type="button" class="comment-nudge-close" aria-label="${copy.close}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="comment-nudge-timer" aria-hidden="true" style="--linger:${NUDGE.linger}ms"></span>`;
+    document.body.appendChild(card);
+    state.card = card;
+
+    card.querySelector(".comment-nudge-cta").addEventListener("click", () => { hide(); scrollToComments(); });
+    card.querySelector(".comment-nudge-close").addEventListener("click", hide);
+    card.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
+    card.querySelector(".comment-nudge-timer").addEventListener("animationend", hide);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("is-shown")));
+  }
 }
 
 // Journey maps are rendered with Leaflet (vendored locally) over OpenStreetMap
