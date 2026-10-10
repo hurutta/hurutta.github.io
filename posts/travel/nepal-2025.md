@@ -21,9 +21,9 @@ Seven days across Nepal (3–9 January 2025) — **Kathmandu → Manang → Pokh
 |:----|:---------------------|:-------------------------------------------------------------------------------------|:------------|
 | 1   | Kathmandu → Mugling  | Arrival at KTM, jeep ride toward Manang                                              | Mugling     |
 | 2   | Mugling → Humde      | Drive through Besisahar, winding mountain roads into the Himalayas                   | Humde       |
-| 3   | Manang & Lakes       | Frozen Gangapurna Lake & glacier, Manang village, Green Lake, begin descent            | On the road |
+| 3   | Manang & Lakes       | Frozen Gangapurna Lake & glacier, Manang village, Green Lake, begin descent            | Besisahar   |
 | 4   | Besisahar → Pokhara  | Early morning arrival, rest, Phewa Lake, lakeside town stroll                        | Pokhara     |
-| 5   | Pokhara              | World Peace, Annapurna range views, sightseeing, depart for Kathmandu         | On the road |
+| 5   | Pokhara              | World Peace, Annapurna range views, sightseeing, depart for Kathmandu         | Kathmandu   |
 | 6   | Kathmandu            | Durbar Square, Asan & Indra Chowk markets, Thamel                                   | Kathmandu   |
 | 7   | Departure            | Airport transfer, flight home                                                        | -           |
 
@@ -126,6 +126,6 @@ On our final morning, we headed back to the airport for our flight home, marking
 
 From the rugged mountain roads leading to Manang to the serene waters of Gangapurna Lake and the lively streets of Thamel, Nepal packed an extraordinary amount into just seven days. The Himalayas have a way of making everything else feel small — and that perspective stays with you long after you leave.
 
-Nepal, you were unforgettable. Until next time!
+Nepal, you were unforgettable. Until next time! In sha Allah!
 
 > **Trip Tags:** #Travel #Nepal #Backpacking #Itinerary #SouthAsia #Himalayas
