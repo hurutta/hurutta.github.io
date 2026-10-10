@@ -17,16 +17,16 @@ Eight days across Sri Lanka (12–19 October 2025) — **Colombo → Kandy → E
 
 ## Our Sri Lanka Itinerary at a Glance
 
-| Day | Destination     | Highlights & Activities                                                                 | Overnight |
-|:----|:----------------|:----------------------------------------------------------------------------------------| :--- |
-| 1   | Colombo → Kandy | Midnight arrival, bus to Kandy, Ambuluwawa Tower, Kandy Lake sunset                     | Kandy |
-| 2   | Kandy / Ella    | Iconic blue train ride, tea estates, Diyathalawa tunnels, hanging out of carriage doors | Ella |
-| 3   | Ella            | Little Adam's Peak, Nine Arch Bridge, Ravana & Kuda Ravana Falls, Ella café hopping     | Ella |
-| 4   | Mirissa         | Coconut Tree Hill sunrise, Mirissa Beach swim, Secret Beach                             | Mirissa |
-| 5   | Ahangama        | Beach hopping, watching surfers at Kabalana, stilt fishermen stop                       | Ahangama |
-| 6   | Unawatuna       | Mihiripenna Beach, Frog Rock, Unawatuna Beach swim                                      | Galle |
-| 7   | Galle           | Rampart walk, lighthouse photos, Dutch Hospital boutiques                               | Colombo |
-| 8   | Colombo         | Lotus Tower, Pettah Market, Pettah Floating Market, airport transfer                    | - |
+| Day | Destination     | Highlights & Activities | Overnight |
+|:----|:----------------|:------------------------| :--- |
+| 1   | Colombo → Kandy | Midnight arrival, bus to Kandy, Ambuluwawa Tower, Kandy Lake sunset | Kandy |
+| 2   | Kandy / Ella    | Blue train ride, tea estates, Diyathalawa tunnels, hanging out doors | Ella |
+| 3   | Ella            | Little Adam's Peak, Nine Arch Bridge, Ravana Falls, café hopping | Ella |
+| 4   | Mirissa         | Bus from Ella, beach walk, Coconut Tree Hill, Secret Beach, beachside sea fish | Mirissa |
+| 5   | Ahangama        | Beach hopping, big surf waves, stilt fishermen | Ahangama |
+| 6   | Unawatuna       | Mihiripenna Beach, Frog Rock, Unawatuna Beach | Galle |
+| 7   | Galle           | Rampart walk, lighthouse photos, Dutch Hospital, bus to Colombo, Galle Face Green | Colombo |
+| 8   | Colombo         | Pettah Market, Pettah Floating Market, Jami Ul-Alfar Mosque, airport transfer | - |
 
 ```journey
 route: assets/routes/srilanka-2025.json
@@ -37,7 +37,7 @@ Mirissa | 5.9483, 80.4589 | Day 4 · Coconut Tree Hill & beaches
 Ahangama | 5.9739, 80.3623 | Day 5 · Surf town & stilt fishermen
 Unawatuna | 6.0174, 80.2489 | Day 6 · Beach hopping
 Galle | 6.0328, 80.2170 | Day 7 · Galle Fort ramparts
-Colombo | 6.9271, 79.8612 | Day 8 · Lotus Tower & departure
+Colombo | 6.9271, 79.8612 | Days 7–8 · Galle Face Green & departure
 ```
 
 ---
@@ -84,7 +84,7 @@ We started very early morning and walked from town to **Little Adam's Peak**. Ne
 
 ## Day 4 @ Mirissa: Sun, Sand, and Sea in Mirissa | 15 October 2025
 
-Sunrise at **Coconut Tree Hill** gave us silhouettes of palms against the Indian Ocean — a must for drone shots. The afternoon was spent on **Mirissa Beach**, alternating between swimming and sipping king coconuts. A short hike rewarded us with **Secret Beach**, where the calm turquoise water was beautiful.
+In the early morning, we took a bus from Ella towards **Mirissa**. Sri Lankan buses are driven really fast — they take the winding mountain bends at 80–90 km/h without a second thought. Mirissa has several beaches, each a little apart from the next, and you can simply walk along the shore from one to another. We explored them all: **Parrot Rock**, **Coconut Tree Hill**, **Mirissa Beach**, **Secret Beach** and **Niyana Wella Beach**. At night, we had fresh sea fish right by the beach in Mirissa.
 
 *Parrot Rock → Coconut Tree Hill → Mirissa Beach → Mirissa Secret Beach → Niyana Wella Beach*
 
@@ -96,7 +96,7 @@ Sunrise at **Coconut Tree Hill** gave us silhouettes of palms against the Indian
 
 ## Day 5 @ Ahangama: Beach Vibes in Ahangama | 16 October 2025
 
-We shifted base to Ahangama for its surf-town vibe. Spent the day hopping between beaches — **Ahangama**, **Waligama**, and **Kabalana**. At Kabalana we sat and watched surfers riding the waves, pretty cool to see even from the shore. We also stopped to see the famous **stilt fishermen** doing their thing — the real deal, not a tourist show.
+Between Mirissa and Galle there are lots of spots along the coast, and buses make it really easy and quick to get from one to the next. Ahangama is a surfing beach, so that's where we chose to base ourselves — the waves here are huge. We spent the day hopping between beaches — **Ahangama**, **Waligama**, and **Kabalana**. We also stopped to see the famous **stilt fishermen** doing their thing — the real deal, not a tourist show.
 
 *Ahangama Beach → Ahangama Secret → Waligama Beach → Stilt Fishermen Spot → Kabalana Beach*
 
@@ -120,9 +120,9 @@ We took it easy and spent the day exploring the beaches south of Galle. First st
 
 ## Day 7 @ Galle: A Step Back in Time at Galle Fort | 18 October 2025
 
-**Galle Fort** felt like stepping into a living museum. We walked the ramparts from the lighthouse to the clocktower and browsed boutiques in the **Dutch Hospital** complex. Cobblestone streets, mustard-colored walls, and sea views made it easy to slow down and just wander.
+**Galle Fort** felt like stepping into a living museum. We walked the ramparts from the lighthouse to the clocktower and browsed boutiques in the **Dutch Hospital** complex. Cobblestone streets, mustard-colored walls, and sea views made it easy to slow down and just wander. In the afternoon, we set off for Colombo by bus. That night we went to **Galle Face Green** beach in Colombo and spent the evening exploring Galle Face.
 
-*Galle Fort Ramparts → Lighthouse → Dutch Hospital*
+*Galle Fort Ramparts → Lighthouse → Dutch Hospital → Bus to Colombo → Galle Face Green*
 
 ![Galle Fort streets](assets/images/tour/srilanka25/galle_fort.jpeg "Inside Galle Fort")
 ![Galle Fort ramparts](assets/images/tour/srilanka25/galle_fort_2.jpeg "Galle Fort ramparts")
@@ -131,17 +131,17 @@ We took it easy and spent the day exploring the beaches south of Galle. First st
 
 ## Day 8 @ Colombo: Farewell, Sri Lanka | 19 October 2025
 
-For the final day we visited the **Lotus Tower** for panoramic views of the city, then headed to **Pettah Market** for a souvenir run and explored the **Pettah Floating Market**. We also peeked inside **Jami Ul-Alfar Mosque**. After stocking up on Ceylon tea and cinnamon, we headed to the airport with sand still between our toes.
+The **Lotus Tower** was visible right from our hotel. For the final day we headed to **Pettah Market** for a souvenir run and explored the **Pettah Floating Market**. We also peeked inside **Jami Ul-Alfar Mosque**. We bought some Ceylon tea and cinnamon. Then we went to the airport.
 
-*Lotus Tower → Pettah Market → Pettah Floating Market → Jami Ul-Alfar Mosque → Airport*
+*Pettah Market → Pettah Floating Market → Jami Ul-Alfar Mosque → Airport*
 
 ![Lotus Tower](assets/images/tour/srilanka25/lotus_tower.jpeg "Lotus Tower, Colombo")
 ![Jami Ul-Alfar Mosque](assets/images/tour/srilanka25/jamiul_alfar_mosque.jpeg "Jami Ul-Alfar Mosque")
 
 ### Final Reflections
 
-If we had more time we would tack on a safari at Yala or a visit to Jaffna, but this eight-day loop delivered a perfect sampler of Sri Lanka’s diversity: bustling city energy, mountain serenity, once-in-a-lifetime rail journeys, and restorative beach time. The island’s warmth—both literal and figurative—made it feel like home almost instantly.
+In eight days we got a good taste of Sri Lanka: the hills of Kandy, the train ride to Ella, the trails around Ella and the beaches down south. The surfing beaches stood out the most. Their big waves were really tempting. The people were warm and friendly everywhere we went.
 
-Sri Lanka, you were incredible. Until next time!
+Sri Lanka, you were great.
 
 > **Trip Tags:** #Travel #SriLanka #Backpacking #Itinerary #SouthAsia
