@@ -450,7 +450,7 @@ const blogData = [
         date: "Jun 15, 2026",
         readingTime: "12 min read",
         summary:
-          "A 9-day run from Bangkok down to Krabi, Railay, Koh Phi Phi, and Phuket—overnight buses, island-hopping boats, limestone cliffs, hidden lagoons, and Bangkok's markets and temples to finish.",
+          "A 9-day run from Bangkok down to Krabi, Railay, Phi Phi Island, and Phuket—overnight buses, island-hopping boats, limestone cliffs, hidden lagoons, and Bangkok's markets and temples to finish.",
       },
       {
         slug: "travel/srilanka-2025",

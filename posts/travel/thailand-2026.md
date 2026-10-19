@@ -11,7 +11,7 @@ tags:
 
 # 9 Days in Thailand
 
-Nine days across Thailand (4–12 April 2026) — **Bangkok → Krabi → Ao Nang → Railay → Koh Phi Phi → Phuket → Bangkok**. Overnight buses, island-hopping boats, limestone cliffs, hidden lagoons, and the chaos and charm of Bangkok to bookend it all.
+Nine days across Thailand (4–12 April 2026) — **Bangkok → Krabi → Ao Nang → Railay → Phi Phi Island → Phuket → Bangkok**. Overnight buses, island-hopping boats, limestone cliffs, hidden lagoons, and the chaos and charm of Bangkok to bookend it all.
 
 ---
 
@@ -20,10 +20,10 @@ Nine days across Thailand (4–12 April 2026) — **Bangkok → Krabi → Ao Nan
 | Day | Destination            | Highlights & Activities                                                              | Overnight |
 |:----|:-----------------------|:-------------------------------------------------------------------------------------| :--- |
 | 1   | Bangkok → Krabi        | Land in Bangkok, day in the capital, evening overnight bus south                     | Overnight bus |
-| 2   | Ao Nang (Krabi)        | Songthaew to Ao Nang, beachfront breakfast, Noppharat Thara, night market fireworks  | Ao Nang |
-| 3   | Krabi Beaches & Caves  | Monkey Trail, Pai Plong, Railay, Diamond Cave, Railay East, Phra Nang Beach          | Ao Nang |
-| 4   | Koh Phi Phi            | Boat crossing, Phi Phi Viewpoints 1 & 2, Viking Beach, Long Beach                    | Koh Phi Phi |
-| 5   | Koh Phi Phi Islands    | Ton Sai, Maya Bay, Monkey Bay, Viking Cave, Loh Samah, Pi Leh Lagoon, Loh Dalum      | Koh Phi Phi |
+| 2   | Ao Nang (Krabi)        | Songthaew to Ao Nang, beachfront breakfast, Noppharat Thara, night market fire show | Ao Nang |
+| 3   | Krabi Beaches & Caves  | Monkey Trail, Railay, Diamond Cave, Railay East, Phra Nang Beach          | Ao Nang |
+| 4   | Phi Phi Island            | Boat crossing, Phi Phi Viewpoints 1 & 2, Viking Beach, Long Beach                    | Phi Phi Island |
+| 5   | Phi Phi Islands    | Ton Sai, Maya Bay, Monkey Bay, Viking Cave, Loh Samah, Pi Leh Lagoon, Loh Dalum      | Phi Phi Island |
 | 6   | Phuket Old Town        | Ship to Phuket, historic Old Town streets, evening overnight bus to Bangkok          | Overnight bus |
 | 7   | Bangkok Parks & Malls  | Chatuchak Park, Lumphini Park, Pratunam shopping                                     | Bangkok |
 | 8   | Bangkok Culture        | Grand Palace, Khao San Road, Chinatown, Khlong Toei Market, Terminal 21              | Bangkok |
@@ -35,7 +35,7 @@ Bangkok | 13.7563, 100.5018 | Day 1 · Arrival
 Krabi Town | 8.0863, 98.9063 | Day 2 · Morning arrival by overnight bus
 Ao Nang | 8.0327, 98.8177 | Days 2–3 · Beaches & night market
 Railay | 8.0119, 98.8372 | Day 3 · Beaches, caves & cliffs
-Koh Phi Phi | 7.7407, 98.7784 | Days 4–5 · Island life
+Phi Phi Island | 7.7407, 98.7784 | Days 4–5 · Island life
 Phuket Old Town | 7.8850, 98.3875 | Day 6 · Old Town streets
 Bangkok | 13.7563, 100.5018 | Days 7–9 · City days & departure
 ```
@@ -52,7 +52,7 @@ Our Thai adventure began the moment we touched down in Bangkok. We spent the day
 
 ## Day 2 @ Ao Nang: Coastal Vibes at Ao Nang | 5 April 2026
 
-We rolled into the Krabi bus terminal early in the morning and caught a local songthaew the rest of the way, reaching Ao Nang by around 9:00 AM. After dropping our bags off at the hotel, we headed straight to **Ao Nang Beach** for breakfast right by the shore — a proper way to meet the Andaman Sea for the first time. The afternoon was slower and sweeter: a relaxing stroll along **Noppharat Thara Beach**, its long, quiet stretch of sand a calm counterpoint to the busier strip. We capped off our first night at the **Ao Nang Landmark Night Market**, soaking in the buzz and the vibrant fireworks lighting up the sky.
+We rolled into the Krabi bus terminal early in the morning and caught a local songthaew the rest of the way, reaching Ao Nang by around 9:00 AM. After dropping our bags off at the hotel, we headed straight to **Ao Nang Beach** for breakfast right by the shore — a proper way to meet the Andaman Sea for the first time. The afternoon was slower and sweeter: a relaxing stroll along **Noppharat Thara Beach**, its long, quiet stretch of sand a calm counterpoint to the busier strip. We capped off our first night at the **Ao Nang Landmark Night Market**, soaking in the buzz and watching a fire show, with performers spinning and twirling flames.
 
 *Krabi Bus Terminal → Ao Nang Beach → Noppharat Thara Beach → Ao Nang Landmark Night Market*
 
@@ -64,9 +64,9 @@ We rolled into the Krabi bus terminal early in the morning and caught a local so
 
 ## Day 3 @ Krabi: Exploring Krabi's Iconic Beaches and Caves | 6 April 2026
 
-The next day was dedicated to the very best of Krabi's coastline. We set out along the scenic **Monkey Trail**, the cliffside path that opens up onto the sea, and relaxed for a while on **Pai Plong Beach**. From there we made our way over to **Railay Beach**, where the limestone karsts rise straight out of the water. We explored the fascinating rock formations inside **Diamond Cave (Phra Nang Nai Cave)**, then walked through **Railay East Beach** before wrapping up our explorations at the stunning **Phra Nang Beach** — easily one of the most beautiful corners of the whole trip.
+The next day was dedicated to the very best of Krabi's coastline. We set out along the scenic **Monkey Trail**, the cliffside path that opens up onto the sea. Then we started for **Railay Beach**, where the limestone karsts rise straight out of the water. We explored the fascinating rock formations inside **Diamond Cave (Phra Nang Nai Cave)**, then walked through **Railay East Beach** before wrapping up our explorations at the stunning **Phra Nang Beach** — easily one of the most beautiful corners of the whole trip.
 
-*Monkey Trail → Pai Plong Beach → Railay Beach → Diamond Cave (Phra Nang Nai Cave) → Railay East Beach → Phra Nang Beach*
+*Monkey Trail → Railay Beach → Diamond Cave (Phra Nang Nai Cave) → Railay East Beach → Phra Nang Beach*
 
 ![The Monkey Trail at Ao Nang](assets/images/tour/thailand26/monkey_trail_ao_nang.jpeg "Along the Monkey Trail")
 ![Inside Diamond Cave](assets/images/tour/thailand26/phra_nang_nai_cave.jpeg "Rock formations inside Diamond Cave (Phra Nang Nai Cave)")
@@ -75,14 +75,14 @@ The next day was dedicated to the very best of Krabi's coastline. We set out alo
 
 ---
 
-## Day 4 @ Koh Phi Phi: Island Crossing to Koh Phi Phi | 7 April 2026
+## Day 4 @ Phi Phi Island: Island Crossing to Phi Phi Island | 7 April 2026
 
-In the morning we boarded a boat and made the crossing to the beautiful island of **Koh Phi Phi**. We spent the day exploring the island's higher ground and pristine shores, climbing up to take in the panoramic vistas from **Phi Phi Viewpoints 1 & 2** — the classic postcard shot of the twin bays meeting at a thin strip of land. From up there we headed back down to visit **Viking Beach** and unwind on **Long Beach**, letting the slower island pace take over.
+In the morning we boarded a boat and made the crossing to the beautiful **Phi Phi Island**. We spent the day exploring the island's higher ground and pristine shores, climbing up to take in the panoramic vistas from **Phi Phi Viewpoints 1 & 2** — the classic postcard shot of the twin bays meeting at a thin strip of land. From up there we headed back down to visit **Viking Beach** and unwind on **Long Beach**, letting the slower island pace take over.
 
-*Boat to Koh Phi Phi → Phi Phi Viewpoints 1 & 2 → Viking Beach → Long Beach*
+*Boat to Phi Phi Island → Phi Phi Viewpoints 1 & 2 → Viking Beach → Long Beach*
 
 ![Phi Phi Viewpoint](assets/images/tour/thailand26/phi_phi_viewpoint.jpeg "The view from Phi Phi Viewpoint")
-![The twin bays from above](assets/images/tour/thailand26/phiphi_viewpoint.jpeg "Looking down over Koh Phi Phi")
+![The twin bays from above](assets/images/tour/thailand26/phiphi_viewpoint.jpeg "Looking down over Phi Phi Island")
 ![Long Beach](assets/images/tour/thailand26/long_beach.jpeg "Unwinding on Long Beach")
 ![Long Beach](assets/images/tour/thailand26/long_beach_2.jpeg "The quiet shore of Long Beach")
 
@@ -90,7 +90,7 @@ In the morning we boarded a boat and made the crossing to the beautiful island o
 
 ## Day 5 @ Phi Phi: Iconic Lagoons and Island Landmarks | 8 April 2026
 
-Our next day on Phi Phi was packed with the island's most famous landmarks. We started by exploring **Ton Sai Beach**, then took a boat tour out to witness the world-famous **Maya Bay**, the cliff-ringed cove made legendary by the movies. From there the route strung together one stunner after another — **Monkey Bay**, the **Viking Cave**, **Loh Samah**, and the crystal-clear, impossibly green waters of **Pi Leh Lagoon**, walled in by towering limestone. We rounded out the perfect island day back at **Loh Dalum Beach**, where we caught a beautiful sunset and stayed into the evening to watch the firework show light up the bay.
+Our next day on Phi Phi was packed with the island's most famous landmarks. We started by exploring **Ton Sai Beach**, then took a boat tour out to witness the world-famous **Maya Bay**, the cliff-ringed cove made legendary by the movies. From there the route strung together one stunner after another — **Monkey Bay**, the **Viking Cave**, **Loh Samah**, and the crystal-clear, impossibly green waters of **Pi Leh Lagoon**, walled in by towering limestone. We rounded out the perfect island day back at **Loh Dalum Beach**, where we caught a beautiful sunset and stayed into the evening to watch the fire show on the beach.
 
 *Ton Sai Beach → Maya Bay → Monkey Bay → Viking Cave → Loh Samah → Pi Leh Lagoon → Loh Dalum Beach*
 
@@ -103,7 +103,7 @@ Our next day on Phi Phi was packed with the island's most famous landmarks. We s
 
 ## Day 6 @ Phuket: Transit to Phuket & Old Town Exploration | 9 April 2026
 
-We took a ship from Koh Phi Phi and arrived in **Phuket** early in the morning. From the pier we hopped on a local bus to reach **Old Phuket Town**, and spent the entire day wandering its charming, historic streets — the pastel Sino-Portuguese shophouses, the little cafés, and the easygoing rhythm of the old quarter. As the day wound down, we caught a long-distance bus from Phuket to begin our journey back up to Bangkok.
+We took a ship from Phi Phi Island and arrived in **Phuket** early in the morning. From the pier we hopped on a local bus to reach **Old Phuket Town**, and spent the entire day wandering its charming, historic streets — the pastel Sino-Portuguese shophouses, the little cafés, and the easygoing rhythm of the old quarter. As the day wound down, we caught a long-distance bus from Phuket to begin our journey back up to Bangkok.
 
 *Ship to Phuket → Old Phuket Town → Long-distance bus to Bangkok*
 
@@ -115,7 +115,7 @@ We took a ship from Koh Phi Phi and arrived in **Phuket** early in the morning. 
 
 ## Day 7 @ Bangkok: Reaching Bangkok, City Parks & Retail Therapy | 10 April 2026
 
-We arrived back in Bangkok in the morning. Right after getting off the bus, we noticed **Chatuchak Park** nearby and took a nice morning walk to explore it — a green, breezy welcome back to the capital. Afterward we took a local bus to our hotel, dropped off our heavy baggage, and immediately headed out again to visit **Lumphini Park**, the city's leafy central lung. By afternoon we made our way to **Pratunam**, a bustling area packed with endless malls, where we spent hours shopping and exploring the markets.
+We arrived back in Bangkok in the morning. Right after getting off the bus, we noticed **Chatuchak Park** nearby and took a morning walk to explore it. There was greenery all around, and it felt nice. Afterward we took a local bus to our hotel, dropped off our heavy baggage, and immediately headed out again to visit **Lumphini Park**, a big green park in the middle of the city. By afternoon we made our way to **Pratunam**, an area with lots of shopping malls. We spent hours shopping and exploring the markets.
 
 *Chatuchak Park → Hotel → Lumphini Park → Pratunam*
 
@@ -129,7 +129,7 @@ We arrived back in Bangkok in the morning. Right after getting off the bus, we n
 
 ## Day 8 @ Bangkok: Culture, Markets & City Life | 11 April 2026
 
-We started our morning by taking a bus to the majestic **Grand Palace**, Bangkok's most iconic landmark, all gilded spires and intricate detail. After soaking in the culture, we made our way to the famous **Khao San Road**, where we stopped for lunch in the heart of the backpacker buzz. In the afternoon we headed over to explore the vibrant sights of **Chinatown**, followed by a visit to the sprawling **Khlong Toei Fresh Market** — loud, colourful, and full of everyday city life. As evening fell, we wrapped up our city exploration at **Terminal 21**, wandering through its unique, themed shopping floors, each one styled after a different world city.
+We started our morning by taking a bus to the majestic **Grand Palace**, Bangkok's most iconic landmark, all gilded spires and intricate detail. After the palace, we made our way to the famous **Khao San Road**, where we stopped for lunch in the heart of the backpacker buzz. In the afternoon we headed over to explore the vibrant sights of **Chinatown**, followed by a visit to the sprawling **Khlong Toei Fresh Market** — crowded, colourful, and full of everyday city life. As evening fell, we wrapped up our city exploration at **Terminal 21**, wandering through its unique, themed shopping floors, each one styled after a different world city.
 
 *Grand Palace → Khao San Road → Chinatown → Khlong Toei Fresh Market → Terminal 21*
 
@@ -149,8 +149,6 @@ Our final day was all about making our way home. We caught the **BTS Skytrain** 
 
 ### Final Reflections
 
-Nine days, two coasts, and just about every kind of Thailand in between — the limestone cliffs and hidden lagoons of the Andaman, the slow island days on Phi Phi, the old-world charm of Phuket's streets, and the relentless, glorious energy of Bangkok. Overnight buses and morning boats stitched it all together, and somehow it never felt rushed — just full.
+In nine days we covered a lot of Thailand: the beaches and caves around Krabi, the boat trips around Phi Phi Island, the old streets of Phuket and the busy days in Bangkok. We moved by overnight buses and boats, and the trip never felt rushed.
 
-Thailand, you were everything we hoped for. Until next time!
-
-> **Trip Tags:** #Travel #Thailand #Krabi #KohPhiPhi #Phuket #Bangkok #Backpacking #Itinerary #SoutheastAsia
+> **Trip Tags:** #Travel #Thailand #Krabi #PhiPhiIsland #Phuket #Bangkok #Backpacking #Itinerary #SoutheastAsia
