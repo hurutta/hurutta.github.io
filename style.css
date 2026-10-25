@@ -5714,3 +5714,87 @@ body[data-page="post"] .content-map-links a {
   .comment-nudge { transition: opacity 0.2s linear; transform: none; }
   .comment-nudge.is-shown .comment-nudge-icon svg, #comments.is-beckoning { animation: none; }
 }
+
+/* ---------- Read-aloud player ---------- */
+/* Sits between the language toggle and the post body. Rendered only when the
+   reader's machine actually has a voice for the post's language, so most of
+   the time this costs nothing. */
+.post-audio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 18px;
+  flex-wrap: wrap;
+}
+
+.post-audio-btn,
+.post-audio-rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--nav-surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.post-audio-btn:hover,
+.post-audio-rate:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.post-audio-btn:focus-visible,
+.post-audio-rate:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The explicit display above outranks the UA rule for [hidden], so restate it. */
+.post-audio-btn[hidden] {
+  display: none;
+}
+
+.post-audio-rate {
+  padding: 6px 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.post-audio-icon {
+  font-size: 0.7em;
+  line-height: 1;
+}
+
+.post-audio-progress {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.post-audio.is-playing .post-audio-btn {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The block being spoken. A left rule plus a faint wash: enough to follow
+   along without the page appearing to flash on every sentence. */
+.post-card .is-speaking {
+  position: relative;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow: -10px 0 0 0 color-mix(in srgb, var(--accent) 9%, transparent),
+    inset 2px 0 0 0 var(--accent);
+  border-radius: 2px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card .is-speaking {
+    transition: none;
+  }
+}

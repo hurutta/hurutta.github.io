@@ -725,6 +725,7 @@ function initChatSection() {
 async function hydratePostPage() {
   cachedViewCount = null;
   destroyCommentNudge();
+  destroyPostAudio();
   const titleEl = document.getElementById("postTitle");
   const metaEl = document.getElementById("postMeta");
   const contentEl = document.getElementById("postContent");
@@ -761,6 +762,7 @@ async function hydratePostPage() {
     initReactions(slug);
     initComments(slug);
     initCommentNudge(slug);
+    initPostAudio();
 
     // Check if Bengali version exists
     try {
@@ -832,6 +834,8 @@ async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, conte
     if (postPanel) {
       postPanel.setAttribute("data-lang-active", lang);
     }
+    // The voice follows the text, so the player is rebuilt for the new language.
+    initPostAudio();
   } catch (_) {
     // Silently fail — keep current language
   }
@@ -1137,6 +1141,240 @@ function initCommentNudge(slug) {
 
     requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add("is-shown")));
   }
+}
+
+// Read-aloud. Entirely client-side: the Web Speech API hands the text to the
+// voice pack already installed on the reader's own machine, so there is no
+// server, no API key and no cost. Nothing is sent anywhere.
+//
+// The catch is that voices are per-machine. Bengali ships on macOS (Piya) and
+// on most Android builds, but a Windows or Linux reader usually has none — so
+// the control only appears when a voice for the post's language actually
+// exists. Showing a dead button, or letting an English voice attempt Bengali,
+// is worse than showing nothing.
+const TTS_PREFERRED = { bn: ["Piya"], en: ["Samantha"] };
+// Blocks that would read as noise: code, tables, the itinerary cards, route
+// lines, tag chips, figure captions and the Medium card.
+const TTS_SKIP = ".md-code, pre, table, .md-itinerary, .md-route, .md-tags, figcaption, .medium-cta, .lang-toggle, .journey-map";
+const TTS_BLOCKS = "p, h2, h3, li, blockquote";
+// Chrome drops an utterance that runs much past ~15s, so text is spoken in
+// sentence-sized pieces. That also makes pause, resume and highlighting land
+// on a natural boundary instead of mid-word.
+const TTS_MAX_CHUNK = 220;
+let postAudio = null;
+
+function ttsVoices() {
+  return new Promise((resolve) => {
+    const have = window.speechSynthesis.getVoices();
+    if (have.length) return resolve(have);
+    // Chrome populates the list asynchronously; fall through after a beat so a
+    // browser that never fires the event cannot hang the page.
+    const done = () => resolve(window.speechSynthesis.getVoices());
+    window.speechSynthesis.addEventListener("voiceschanged", done, { once: true });
+    setTimeout(done, 1500);
+  });
+}
+
+function ttsPickVoice(voices, lang) {
+  const matches = voices.filter((v) => (v.lang || "").toLowerCase().startsWith(lang));
+  if (!matches.length) return null;
+  for (const name of TTS_PREFERRED[lang] || []) {
+    const hit = matches.find((v) => v.name === name);
+    if (hit) return hit;
+  }
+  // A local voice needs no network and starts instantly; prefer one.
+  return matches.find((v) => v.localService) || matches[0];
+}
+
+// Split a block into speakable pieces, keeping each one short enough that the
+// engine will not cut it off. Bengali ends sentences with a danda (।).
+function ttsChunk(text) {
+  const out = [];
+  for (const sentence of text.split(/(?<=[।!?])\s+|(?<=\.)\s+(?=[A-Zঀ-৿])/)) {
+    let rest = sentence.trim();
+    if (!rest) continue;
+    while (rest.length > TTS_MAX_CHUNK) {
+      // Break at the last comma or dash that still fits, else hard-wrap.
+      const window = rest.slice(0, TTS_MAX_CHUNK);
+      let cut = Math.max(window.lastIndexOf(", "), window.lastIndexOf(" — "), window.lastIndexOf("; "));
+      if (cut < 60) cut = window.lastIndexOf(" ");
+      if (cut < 1) cut = TTS_MAX_CHUNK;
+      out.push(rest.slice(0, cut).trim());
+      rest = rest.slice(cut).trim();
+    }
+    if (rest) out.push(rest);
+  }
+  return out;
+}
+
+// Arrows and dashes are punctuation to the eye but garbage to a synthesiser,
+// which either spells them out or swallows the pause. A comma reads as the
+// beat the author meant, in both languages.
+function ttsNormalize(text) {
+  return text
+    .replace(/[\u2190-\u21FF]/g, ", ")
+    .replace(/\s[–—]\s/g, ", ")
+    .replace(/\s·\s/g, ", ")
+    .replace(/\s*,\s*(,\s*)+/g, ", ")
+    .replace(/\s+([,.])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[\s,]+/, "")
+    .trim();
+}
+
+function ttsCollect(root) {
+  const pieces = [];
+  root.querySelectorAll(TTS_BLOCKS).forEach((el) => {
+    if (el.closest(TTS_SKIP)) return;
+    // The trip-tag chips render as a blockquote, so the skip list cannot catch
+    // them by ancestor: "hash Travel hash SriLanka" is not worth hearing.
+    if (el.querySelector(".md-tags")) return;
+    // A nested list item is reached on its own; skip the parent's duplicate text.
+    if (el.matches("blockquote") && el.querySelector("p")) return;
+    const text = ttsNormalize(el.innerText || el.textContent || "");
+    if (text.length < 2) return;
+    ttsChunk(text).forEach((t) => pieces.push({ el, text: t }));
+  });
+  return pieces;
+}
+
+function destroyPostAudio() {
+  if (!postAudio) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch (_) {
+    /* a browser without speech support never got here, but be safe */
+  }
+  postAudio.cleanup.forEach((fn) => fn());
+  postAudio.bar?.remove();
+  document.querySelectorAll(".is-speaking").forEach((el) => el.classList.remove("is-speaking"));
+  postAudio = null;
+}
+
+async function initPostAudio() {
+  destroyPostAudio();
+  if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) return;
+  const contentEl = document.getElementById("postContent");
+  if (!contentEl) return;
+
+  const lang = currentLang === "bn" ? "bn" : "en";
+  const voice = ttsPickVoice(await ttsVoices(), lang);
+  // No voice for this language on this machine: stay silent and show nothing.
+  if (!voice) return;
+  // The language may have been switched while the voice list was loading.
+  if ((currentLang === "bn" ? "bn" : "en") !== lang) return;
+
+  const pieces = ttsCollect(contentEl);
+  if (!pieces.length) return;
+
+  const copy = lang === "bn"
+    ? { play: "শুনুন", pause: "থামান", resume: "চালান", stop: "বন্ধ", label: "পোস্টটি শুনুন" }
+    : { play: "Listen", pause: "Pause", resume: "Resume", stop: "Stop", label: "Listen to this post" };
+
+  const bar = document.createElement("div");
+  bar.className = "post-audio";
+  bar.setAttribute("aria-label", copy.label);
+  if (lang === "bn") bar.lang = "bn";
+  bar.innerHTML = `
+    <button class="post-audio-btn" data-act="play" type="button">
+      <span class="post-audio-icon" aria-hidden="true">▶</span><span class="post-audio-text">${copy.play}</span>
+    </button>
+    <button class="post-audio-btn post-audio-stop" data-act="stop" type="button" hidden>${copy.stop}</button>
+    <button class="post-audio-rate" data-act="rate" type="button" title="Speed">1×</button>
+    <span class="post-audio-progress" aria-live="off"></span>`;
+  contentEl.insertAdjacentElement("beforebegin", bar);
+
+  const playBtn = bar.querySelector('[data-act="play"]');
+  const stopBtn = bar.querySelector('[data-act="stop"]');
+  const rateBtn = bar.querySelector('[data-act="rate"]');
+  const progress = bar.querySelector(".post-audio-progress");
+  const RATES = [1, 1.25, 1.5, 0.85];
+
+  const state = { i: 0, rate: 1, playing: false, paused: false };
+  postAudio = { bar, cleanup: [] };
+
+  function paint() {
+    const icon = playBtn.querySelector(".post-audio-icon");
+    const text = playBtn.querySelector(".post-audio-text");
+    icon.textContent = state.playing && !state.paused ? "❚❚" : "▶";
+    text.textContent = !state.playing ? copy.play : state.paused ? copy.resume : copy.pause;
+    stopBtn.hidden = !state.playing;
+    progress.textContent = state.playing ? `${Math.min(state.i + 1, pieces.length)} / ${pieces.length}` : "";
+    bar.classList.toggle("is-playing", state.playing && !state.paused);
+  }
+
+  function highlight(el) {
+    document.querySelectorAll(".is-speaking").forEach((n) => n.classList.remove("is-speaking"));
+    if (el) el.classList.add("is-speaking");
+  }
+
+  function speakFrom(index) {
+    window.speechSynthesis.cancel();
+    state.i = index;
+    if (index >= pieces.length) return finish();
+    const piece = pieces[index];
+    const u = new SpeechSynthesisUtterance(piece.text);
+    u.voice = voice;
+    u.lang = voice.lang;
+    u.rate = state.rate;
+    u.onstart = () => {
+      highlight(piece.el);
+      paint();
+    };
+    u.onend = () => {
+      // cancel() also fires onend; only advance while still playing.
+      if (!state.playing) return;
+      speakFrom(index + 1);
+    };
+    u.onerror = () => finish();
+    postAudio.utterance = u;
+    window.speechSynthesis.speak(u);
+  }
+
+  function finish() {
+    state.playing = false;
+    state.paused = false;
+    state.i = 0;
+    highlight(null);
+    window.speechSynthesis.cancel();
+    paint();
+  }
+
+  function onPlay() {
+    if (!state.playing) {
+      state.playing = true;
+      state.paused = false;
+      speakFrom(0);
+    } else if (state.paused) {
+      state.paused = false;
+      window.speechSynthesis.resume();
+    } else {
+      state.paused = true;
+      window.speechSynthesis.pause();
+    }
+    paint();
+  }
+
+  function onRate() {
+    state.rate = RATES[(RATES.indexOf(state.rate) + 1) % RATES.length];
+    rateBtn.textContent = `${state.rate}×`;
+    // Rate only applies to a new utterance, so restart the current piece.
+    if (state.playing && !state.paused) speakFrom(state.i);
+  }
+
+  playBtn.addEventListener("click", onPlay);
+  stopBtn.addEventListener("click", finish);
+  rateBtn.addEventListener("click", onRate);
+
+  // Leaving the page mid-sentence would otherwise keep talking: speech lives on
+  // the window, not on the element that was removed.
+  const onHide = () => {
+    if (state.playing) finish();
+  };
+  window.addEventListener("pagehide", onHide);
+  postAudio.cleanup.push(() => window.removeEventListener("pagehide", onHide));
+
+  paint();
 }
 
 // Journey maps are rendered with Leaflet (vendored locally) over OpenStreetMap
