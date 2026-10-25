@@ -744,6 +744,7 @@ async function hydratePostPage() {
   // Clean up any stale toggle from SPA navigation
   const staleToggle = document.getElementById("langToggle");
   if (staleToggle) staleToggle.remove();
+  document.querySelector(".post-tools")?.remove();
 
   try {
     currentPostSlug = slug;
@@ -762,7 +763,6 @@ async function hydratePostPage() {
     initReactions(slug);
     initComments(slug);
     initCommentNudge(slug);
-    initPostAudio();
 
     // Check if Bengali version exists
     try {
@@ -786,12 +786,15 @@ async function hydratePostPage() {
         // Auto-switch to Bengali if stored preference says so
         const storedLang = localStorage.getItem(langStorageKey);
         if (storedLang === "bn") {
-          switchPostLanguage(slug, "bn", titleEl, metaEl, categoryEl, contentEl);
+          await switchPostLanguage(slug, "bn", titleEl, metaEl, categoryEl, contentEl);
         }
       }
     } catch (_) {
       // No Bengali version — toggle not shown
     }
+    // Last: the player sits beside the language toggle, so the toggle has to
+    // exist first, and it reads currentLang, which the auto-switch above sets.
+    initPostAudio();
   } catch (error) {
     renderPostError(titleEl, metaEl, categoryEl, contentEl, error.message || "Unknown error");
   }
@@ -1222,6 +1225,30 @@ function ttsNormalize(text) {
     .trim();
 }
 
+// Follow the spoken block, but only once it has drifted out of a comfortable
+// middle band. Scrolling on every sentence would yank the page out from under a
+// reader still looking at the paragraph above.
+function ttsAutoScroll(el) {
+  const box = el.getBoundingClientRect();
+  const h = window.innerHeight || document.documentElement.clientHeight;
+  const visible = Math.min(box.bottom, h) - Math.max(box.top, 0);
+  // "Readable enough" is the whole block, or half a screen of it when the block
+  // is taller than the screen. Demanding that the block fit entirely inside a
+  // middle band would never be satisfiable on a phone, and the page would
+  // re-centre on every sentence of a long paragraph.
+  const enough = Math.min(box.height, h * 0.5);
+  if (visible >= enough && box.top < h * 0.85) return false;
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Smooth reads well for the short hop to the next paragraph, but animating
+  // across a whole post — after a jump, or when the reader has scrolled away —
+  // takes seconds of blur. Past two screens, go straight there.
+  const leap = Math.abs(box.top - h / 2) > h * 2;
+  // "auto" defers to the CSS scroll-behavior, which is smooth site-wide, so an
+  // immediate jump has to say "instant" outright.
+  el.scrollIntoView({ block: "center", behavior: still || leap ? "instant" : "smooth" });
+  return true;
+}
+
 function ttsCollect(root) {
   const pieces = [];
   root.querySelectorAll(TTS_BLOCKS).forEach((el) => {
@@ -1282,7 +1309,23 @@ async function initPostAudio() {
     <button class="post-audio-btn post-audio-stop" data-act="stop" type="button" hidden>${copy.stop}</button>
     <button class="post-audio-rate" data-act="rate" type="button" title="Speed">1×</button>
     <span class="post-audio-progress" aria-live="off"></span>`;
-  contentEl.insertAdjacentElement("beforebegin", bar);
+
+  // Share a row with the language toggle rather than claiming a line of its own.
+  // The toggle only exists when the post has a Bengali version, so fall back to
+  // sitting directly above the body when there is nothing to sit beside.
+  const toggle = document.getElementById("langToggle");
+  if (toggle) {
+    let row = document.querySelector(".post-tools");
+    if (!row || !row.contains(toggle)) {
+      row = document.createElement("div");
+      row.className = "post-tools";
+      toggle.insertAdjacentElement("beforebegin", row);
+      row.appendChild(toggle);
+    }
+    row.appendChild(bar);
+  } else {
+    contentEl.insertAdjacentElement("beforebegin", bar);
+  }
 
   const playBtn = bar.querySelector('[data-act="play"]');
   const stopBtn = bar.querySelector('[data-act="stop"]');
@@ -1290,7 +1333,7 @@ async function initPostAudio() {
   const progress = bar.querySelector(".post-audio-progress");
   const RATES = [1, 1.25, 1.5, 0.85];
 
-  const state = { i: 0, rate: 1, playing: false, paused: false };
+  const state = { i: 0, rate: 1, playing: false, paused: false, gen: 0 };
   postAudio = { bar, cleanup: [] };
 
   function paint() {
@@ -1305,38 +1348,52 @@ async function initPostAudio() {
 
   function highlight(el) {
     document.querySelectorAll(".is-speaking").forEach((n) => n.classList.remove("is-speaking"));
-    if (el) el.classList.add("is-speaking");
+    if (!el) return;
+    el.classList.add("is-speaking");
+    ttsAutoScroll(el);
   }
 
-  function speakFrom(index) {
+  // Mobile Safari and Chrome on Android only reliably speak utterances that were
+  // queued during the user gesture that started playback: asking for the next
+  // one from the previous utterance's onend dies silently after the first block,
+  // which is exactly the bug seen on phones. So the whole post is queued up
+  // front and the engine walks the queue itself. `gen` orphans the callbacks of
+  // a queue that has since been cancelled.
+  function enqueueFrom(index) {
+    const gen = ++state.gen;
     window.speechSynthesis.cancel();
     state.i = index;
-    if (index >= pieces.length) return finish();
-    const piece = pieces[index];
-    const u = new SpeechSynthesisUtterance(piece.text);
-    u.voice = voice;
-    u.lang = voice.lang;
-    u.rate = state.rate;
-    u.onstart = () => {
-      highlight(piece.el);
-      paint();
-    };
-    u.onend = () => {
-      // cancel() also fires onend; only advance while still playing.
-      if (!state.playing) return;
-      speakFrom(index + 1);
-    };
-    u.onerror = () => finish();
-    postAudio.utterance = u;
-    window.speechSynthesis.speak(u);
+    for (let i = index; i < pieces.length; i++) {
+      const piece = pieces[i];
+      const u = new SpeechSynthesisUtterance(piece.text);
+      u.voice = voice;
+      u.lang = voice.lang;
+      u.rate = state.rate;
+      u.onstart = () => {
+        if (gen !== state.gen) return;
+        state.i = i;
+        highlight(piece.el);
+        paint();
+      };
+      u.onerror = () => {
+        if (gen === state.gen) finish();
+      };
+      if (i === pieces.length - 1) {
+        u.onend = () => {
+          if (gen === state.gen) finish();
+        };
+      }
+      window.speechSynthesis.speak(u);
+    }
   }
 
   function finish() {
+    state.gen++; // any still-queued callbacks now belong to an old generation
     state.playing = false;
     state.paused = false;
     state.i = 0;
-    highlight(null);
     window.speechSynthesis.cancel();
+    highlight(null);
     paint();
   }
 
@@ -1344,7 +1401,7 @@ async function initPostAudio() {
     if (!state.playing) {
       state.playing = true;
       state.paused = false;
-      speakFrom(0);
+      enqueueFrom(0);
     } else if (state.paused) {
       state.paused = false;
       window.speechSynthesis.resume();
@@ -1358,8 +1415,13 @@ async function initPostAudio() {
   function onRate() {
     state.rate = RATES[(RATES.indexOf(state.rate) + 1) % RATES.length];
     rateBtn.textContent = `${state.rate}×`;
-    // Rate only applies to a new utterance, so restart the current piece.
-    if (state.playing && !state.paused) speakFrom(state.i);
+    // Rate is fixed per utterance, so the remainder has to be re-queued. This
+    // runs inside the button's click handler, which keeps the gesture that
+    // mobile engines require.
+    if (state.playing) {
+      state.paused = false;
+      enqueueFrom(state.i);
+    }
   }
 
   playBtn.addEventListener("click", onPlay);

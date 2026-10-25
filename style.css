@@ -5719,12 +5719,30 @@ body[data-page="post"] .content-map-links a {
 /* Sits between the language toggle and the post body. Rendered only when the
    reader's machine actually has a voice for the post's language, so most of
    the time this costs nothing. */
+/* One row: language toggle on the left, playback controls beside it. Wraps to
+   a second line on a narrow phone rather than squeezing the buttons. */
+.post-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+
+.post-tools .lang-toggle {
+  align-self: center;
+}
+
 .post-audio {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 14px 0 18px;
   flex-wrap: wrap;
+}
+
+/* Standalone (a post with no Bengali version) still needs its own spacing. */
+.post-audio:not(.post-tools .post-audio) {
+  margin: 14px 0 18px;
 }
 
 .post-audio-btn,
