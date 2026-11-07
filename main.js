@@ -1311,21 +1311,38 @@ function destroyPostAudio() {
   postAudio = null;
 }
 
+// The row is reserved before we know whether anything will fill it. Drop it
+// once that is settled and it is still empty, so no blank band is left above
+// the article.
+function dropEmptyPostTools() {
+  const row = document.querySelector(".post-tools");
+  if (row && row.childElementCount === 0) row.remove();
+}
+
 async function initPostAudio() {
   destroyPostAudio();
-  if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) return;
+  if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) {
+    dropEmptyPostTools();
+    return;
+  }
   const contentEl = document.getElementById("postContent");
   if (!contentEl) return;
 
   const lang = currentLang === "bn" ? "bn" : "en";
   const voice = ttsPickVoice(await ttsVoices(), lang);
   // No voice for this language on this machine: stay silent and show nothing.
-  if (!voice) return;
+  if (!voice) {
+    dropEmptyPostTools();
+    return;
+  }
   // The language may have been switched while the voice list was loading.
   if ((currentLang === "bn" ? "bn" : "en") !== lang) return;
 
   const pieces = ttsCollect(contentEl);
-  if (!pieces.length) return;
+  if (!pieces.length) {
+    dropEmptyPostTools();
+    return;
+  }
 
   const copy = lang === "bn"
     ? { play: "শুনুন", pause: "থামান", resume: "চালান", stop: "বন্ধ", label: "পোস্টটি শুনুন" }
