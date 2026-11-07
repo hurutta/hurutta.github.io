@@ -737,7 +737,7 @@ async function hydratePostPage() {
   const slug = params.get("slug");
 
   if (!slug) {
-    renderPostError(titleEl, metaEl, categoryEl, contentEl, "Use the blog browser to pick a story.");
+    leavePostPage();
     return;
   }
 
@@ -749,7 +749,11 @@ async function hydratePostPage() {
   try {
     currentPostSlug = slug;
     const [response] = await Promise.all([fetch(`posts/${slug}.md`), loadImageManifest(), loadItineraryStrips()]);
-    if (!response.ok) throw new Error("Post not found");
+    if (!response.ok) {
+      const missing = new Error("Post not found");
+      missing.notFound = true;
+      throw missing;
+    }
     const text = await response.text();
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
@@ -796,8 +800,20 @@ async function hydratePostPage() {
     // exist first, and it reads currentLang, which the auto-switch above sets.
     initPostAudio();
   } catch (error) {
+    if (error && error.notFound) {
+      leavePostPage();
+      return;
+    }
+    // Anything else — offline, a broken fetch — is worth telling the reader
+    // about, because retrying may well work.
     renderPostError(titleEl, metaEl, categoryEl, contentEl, error.message || "Unknown error");
   }
+}
+
+// replace(), not assign(): a dead post URL should not sit in history for the
+// back button to land on again.
+function leavePostPage() {
+  window.location.replace("index.html");
 }
 
 async function switchPostLanguage(slug, lang, titleEl, metaEl, categoryEl, contentEl) {
@@ -898,7 +914,7 @@ function appendMediumCard(contentEl, mediumUrl) {
 
 function populatePostFrontmatter(meta, titleEl, metaEl, categoryEl) {
   [titleEl, metaEl, categoryEl, document.getElementById("postContent")].forEach((el) => el && el.removeAttribute("aria-busy"));
-  document.querySelectorAll(".reactions-wrapper.is-pending, .comments-wrapper.is-pending").forEach((el) => el.classList.remove("is-pending"));
+  document.querySelectorAll(".reactions-wrapper, .comments-wrapper").forEach((el) => el.remove());
   titleEl.textContent = meta.title || "Untitled";
   const metaParts = [meta.date, meta.reading_time].filter(Boolean).join(" · ");
   const countDisplay = cachedViewCount !== null ? cachedViewCount : "—";
