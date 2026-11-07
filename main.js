@@ -111,7 +111,7 @@ function buildLeftPanel() {
   return `
     <div class="brand">
       <div class="avatar">
-        <img src="assets/images/avatar.jpeg" alt="Portrait of Abid Jawad" loading="lazy" />
+        <img width="592" height="592" src="assets/images/avatar.jpeg" alt="Portrait of Abid Jawad" loading="lazy" />
       </div>
       <h1>Abid Jawad</h1>
       <p>Researcher • Engineer • Developer</p>
@@ -152,25 +152,28 @@ function buildContentMap() {
 }
 
 function buildRightPanel(page = "home") {
-  const map = page === "home" ? buildContentMap() : "";
+  // On a post the nav depends on the post body, which arrives later; whoever
+  // has it passes it in. Prepending it to an already-laid-out panel would shove
+  // every card below it down the page.
+  const map = page === "home" ? buildContentMap() : (page === "post" ? buildPostContentMap() : "");
   return `
     ${map}
     <div class="project-stats">
       <h3>LeetCode</h3>
       <div class="embed-wrapper">
-        <img src="https://leetcard.jacoblin.cool/hurutta?theme=catppuccinMocha&font=Monda&ext=contest" alt="LeetCode stats" />
+        <img width="500" height="400" src="https://leetcard.jacoblin.cool/hurutta?theme=catppuccinMocha&font=Monda&ext=contest" alt="LeetCode stats" />
       </div>
     </div>
     <div class="project-stats">
       <h3>CodeForces</h3>
       <div class="embed-wrapper">
-        <img src="https://codeforces-readme-stats.vercel.app/api/card?username=hurutta&theme=monokai&disable_animations=false&show_icons=true&force_username=true" alt="CodeForces stats" />
+        <img width="380" height="290" src="https://codeforces-readme-stats.vercel.app/api/card?username=hurutta&theme=monokai&disable_animations=false&show_icons=true&force_username=true" alt="CodeForces stats" />
       </div>
     </div>
     <div class="project-embed medium-card">
       <h3>LinkedIn</h3>
       <div class="embed-wrapper medium">
-        <img src="assets/images/linkedin-cover.svg" alt="LinkedIn post cover" />
+        <img width="800" height="420" src="assets/images/linkedin-cover.svg" alt="LinkedIn post cover" />
         <div>
           <p class="medium-title">Abid Jawad on LinkedIn</p>
           <a href="https://www.linkedin.com/feed/update/urn:li:share:7358686570813575172" target="_blank" rel="noreferrer">View on LinkedIn →</a>
@@ -180,7 +183,7 @@ function buildRightPanel(page = "home") {
     <div class="project-embed medium-card">
       <h3>Medium</h3>
       <div class="embed-wrapper medium">
-        <img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*foLbFYZbBg6bZPWM" alt="Medium article cover" />
+        <img width="1400" height="933" src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*foLbFYZbBg6bZPWM" alt="Medium article cover" />
         <div>
           <p class="medium-title">Convert your old desktop/laptop to a web server</p>
           <a href="https://medium.com/@abid-jawad/convert-your-old-desktop-laptop-to-a-web-server-5dcfa9350382" target="_blank" rel="noreferrer">Read on Medium →</a>
@@ -283,9 +286,15 @@ function loadFooterDeployTime() {
     });
 }
 
-function renderRightPanels(pageOverride) {
+// A post's right panel waits for the post itself. Its "On this page" nav is
+// built from the rendered body, and filling the panel first only to insert the
+// nav above the cards afterwards drops everything below it by the nav's height
+// — the single largest layout shift on the page. hydratePostPage calls this
+// again, with the body in place, and the panel lays out once.
+function renderRightPanels(pageOverride, postReady = false) {
   document.querySelectorAll("[data-partial='right']").forEach((container) => {
     const page = pageOverride || container.dataset.page || document.body.dataset.page || "home";
+    if (page === "post" && !postReady && !document.querySelector("#postContent .md-itinerary, #postContent h2")) return;
     container.innerHTML = buildRightPanel(page);
   });
 }
@@ -742,13 +751,17 @@ async function hydratePostPage() {
   }
 
   // Clean up any stale toggle from SPA navigation
-  const staleToggle = document.getElementById("langToggle");
-  if (staleToggle) staleToggle.remove();
+  document.getElementById("langToggle")?.remove();
   document.querySelector(".post-tools")?.remove();
 
   try {
     currentPostSlug = slug;
-    const [response] = await Promise.all([fetch(`posts/${slug}.md`), loadImageManifest(), loadItineraryStrips()]);
+    const [response, bnCheck] = await Promise.all([
+      fetch(`posts/${slug}.md`),
+      fetch(`posts/${slug}.bn.md`, { method: "HEAD" }).catch(() => null),
+      loadImageManifest(),
+      loadItineraryStrips(),
+    ]);
     if (!response.ok) {
       const missing = new Error("Post not found");
       missing.notFound = true;
@@ -758,6 +771,11 @@ async function hydratePostPage() {
     const { frontmatter, body } = parseFrontMatter(text);
     populatePostFrontmatter(frontmatter, titleEl, metaEl, categoryEl);
     contentEl.innerHTML = markdownToHtml(body);
+    // Reserved up front: the player is added once the voice list resolves, and
+    // a row appearing then would shove everything below it down the page.
+    const tools = document.createElement("div");
+    tools.className = "post-tools";
+    contentEl.insertAdjacentElement("beforebegin", tools);
     enhancePostImages(contentEl);
     appendMediumCard(contentEl, frontmatter.medium);
     highlightCodeBlocks();
@@ -770,14 +788,13 @@ async function hydratePostPage() {
 
     // Check if Bengali version exists
     try {
-      const bnCheck = await fetch(`posts/${slug}.bn.md`, { method: "HEAD" });
-      if (bnCheck.ok) {
+      if (bnCheck && bnCheck.ok) {
         const toggleHtml = `<div class="lang-toggle" id="langToggle" role="radiogroup" aria-label="Language">
   <button class="lang-option active" data-lang="en" role="radio" aria-checked="true">EN</button>
   <button class="lang-option" data-lang="bn" role="radio" aria-checked="false">বাং</button>
   <span class="lang-thumb"></span>
 </div>`;
-        contentEl.insertAdjacentHTML("beforebegin", toggleHtml);
+        tools.insertAdjacentHTML("afterbegin", toggleHtml);
 
         const toggle = document.getElementById("langToggle");
         toggle.addEventListener("click", (e) => {
@@ -1326,18 +1343,10 @@ async function initPostAudio() {
     <button class="post-audio-rate" data-act="rate" type="button" title="Speed">1×</button>
     <span class="post-audio-progress" aria-live="off"></span>`;
 
-  // Share a row with the language toggle rather than claiming a line of its own.
-  // The toggle only exists when the post has a Bengali version, so fall back to
-  // sitting directly above the body when there is nothing to sit beside.
-  const toggle = document.getElementById("langToggle");
-  if (toggle) {
-    let row = document.querySelector(".post-tools");
-    if (!row || !row.contains(toggle)) {
-      row = document.createElement("div");
-      row.className = "post-tools";
-      toggle.insertAdjacentElement("beforebegin", row);
-      row.appendChild(toggle);
-    }
+  // The row is laid out with the post body and already holds its height, so
+  // dropping the player in now moves nothing below it.
+  const row = document.querySelector(".post-tools");
+  if (row) {
     row.appendChild(bar);
   } else {
     contentEl.insertAdjacentElement("beforebegin", bar);
@@ -2477,15 +2486,8 @@ function buildPostContentMap() {
 }
 
 function injectPostContentMap() {
-  const rightPanel = document.querySelector(".right-panel[data-page='post']");
-  if (!rightPanel) return;
-  // Remove any existing post content map
-  const existing = rightPanel.querySelector(".content-map");
-  if (existing) existing.remove();
-  const mapHtml = buildPostContentMap();
-  if (mapHtml) {
-    rightPanel.insertAdjacentHTML("afterbegin", mapHtml);
-  }
+  // The body is rendered by now, so the panel can be built complete.
+  renderRightPanels("post", true);
 }
 
 function renderPostError(titleEl, metaEl, categoryEl, contentEl, message) {

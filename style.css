@@ -2045,6 +2045,9 @@ body[data-page="post"] .content-map-links a {
 .embed-wrapper iframe,
 .embed-wrapper img {
   width: 100%;
+  /* The width/height attributes on these images exist to reserve the space
+     before they load; auto keeps them a ratio rather than a fixed pixel box. */
+  height: auto;
   border: none;
   display: block;
   clip-path: inset(2px);
@@ -5727,6 +5730,11 @@ body[data-page="post"] .content-map-links a {
   gap: 10px;
   flex-wrap: wrap;
   margin: 0 0 18px;
+  /* Holds its line from first paint. The language toggle is known when the row
+     is built, but the read-aloud player only appears once the browser has
+     resolved its voice list — without a reserved height that late arrival
+     would push the itinerary and the map down the page. */
+  min-height: 34px;
 }
 
 .post-tools .lang-toggle {
