@@ -5824,3 +5824,34 @@ body[data-page="post"] .content-map-links a {
     transition: none;
   }
 }
+
+
+
+
+/* On a post page the background does not move at all. Reading is the whole job
+   here, the page is long, and every translucent panel sits above this layer:
+   while it drifts, each of them has to be recomposited every frame, which is
+   what leaves parts of the article unpainted during a scroll. Short pages keep
+   the motion. data-page is kept current across in-app navigation. */
+body[data-page="post"] .background-grid {
+  animation: none;
+  /* Rasterise once and keep it on the GPU. The layer is the full viewport of
+     per-pixel radial gradients; during a fast scroll-up the compositor was
+     re-rastering it and showing nothing for a few frames, which read as the
+     side panel going dark (the dots and glow behind it are what carry the
+     light). Promoting it means a scroll never has to paint it again. */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* The ::after glow is sized 170% of the viewport so the (now static) drift
+     never shows an edge; clipping it here keeps the kept texture viewport-sized
+     and changes nothing visible, since the excess was off-screen anyway. */
+  overflow: hidden;
+}
+
+body[data-page="post"] .background-grid::after {
+  animation: none;
+  /* Hold the first frame of aurora-drift rather than snapping to an
+     untransformed position, so the glow sits where the animation began. */
+  transform: translate3d(-9%, -6%, 0) rotate(-2deg) scale(1);
+}
